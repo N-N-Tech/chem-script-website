@@ -11,8 +11,7 @@ Private Entwicklungsablage für die interaktive Chemie-Unterrichtswebsite (Unter
 
 ## Stand
 
-Das Repository ist eingerichtet; der **einmalige Import der vorhandenen Website-Dateien steht noch aus**.
-Ausgangsstand: `Properties_of_Matter_Website_revised_v2.zip` aus unserem Chat.
+Die Website wurde vollständig importiert und mit dem Ausgangsstand `Properties_of_Matter_Website_revised_v2.zip` abgeglichen. Die Website-Dateien stimmen mit dieser Version überein. Die Vorschau-Veröffentlichung steht noch aus.
 
 ## Vorgesehene Ordnerstruktur
 
