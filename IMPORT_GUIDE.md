@@ -1,6 +1,6 @@
 # Einmaliger Import der Website
 
-Die Website-Dateien sind **noch nicht** in diesem Repository; bisher ist nur die Projektstruktur vorbereitet.
+**Status: Import abgeschlossen.** Die Website-Dateien sind vollständig im Repository vorhanden. Diese Anleitung dokumentiert den einmaligen Import.
 
 ## GitHub Desktop (empfohlen)
 
