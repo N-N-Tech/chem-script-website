@@ -23,17 +23,16 @@
     ['ex-dens-cal', '1-15'],
     ['ex-dens-vol', '1-16'],
     ['ex-dens-unit', '1-17'],
-    ['ex-temp-def', '1-18'],
-    ['ex-diffcond', '1-19'],
+    ['ex-dens-beam', '1-18'],
+    ['ex-dens-gly', '1-19'],
     ['ex-dens-exp', '1-20'],
-    ['ex-dens-crown', '1-21'],
-    ['ex-other-assign', '1-22'],
-    ['ex-diff', '1-23'],
-    ['ex-mix-types', '1-24'],
-    ['ex-mix-pure', '1-25'],
-    ['ex-mix-hethomo', '1-26'],
-    ['ex-number-27', '1-27'],
-    ['ex-mix-assign', '1-28'],
+    ['ex-other-assign', '1-21'],
+    ['ex-diff', '1-22'],
+    ['ex-mix-types', '1-23'],
+    ['ex-mix-pure', '1-24'],
+    ['ex-mix-hethomo', '1-25'],
+    ['ex-number-27', '1-26'],
+    ['ex-mix-assign', '1-27'],
     ['ex-mix-meri', '1-28']
   ]);
 
@@ -831,37 +830,7 @@
       if (span) span.textContent = `Ex ${number}`;
     });
 
-    const solutionMap = {
-      'solution-car-model': '1-2',
-      'solution-wegener': '1-3',
-      'solution-mix-exp': '1-4',
-      'solution-brownian': '1-5',
-      'solution-par-mod-fills': '1-6',
-      'solution-bar-chart': '1-7',
-      'solution-mp-table': '1-8',
-      'solution-sol-assign': '1-10',
-      'solution-sol-graph': '1-12',
-      'solution-sol-sat': '1-13',
-      'solution-dens-cal': '1-15',
-      'solution-dens-vol': '1-16',
-      'solution-dens-unit': '1-17',
-      'solution-temp-def': '1-18',
-      'solution-diffcond': '1-19',
-      'solution-dens-exp': '1-20',
-      'solution-dens-crown': '1-21',
-      'solution-other-assign': '1-22',
-      'solution-diff': '1-23',
-      'solution-mix-pure': '1-25',
-      'solution-mix-hethomo': '1-26',
-      'solution-mix-assign': '1-27',
-      'solution-mix-meri': '1-28'
-    };
-    Object.entries(solutionMap).forEach(([id, number]) => {
-      const sec = qs(`#${id}`);
-      if (!sec) return;
-      const link = qs('.solution-number a', sec);
-      if (link) link.textContent = number;
-    });
+    qsa('.solution-number a').forEach(link=>{const id=link.getAttribute('href')?.split('#')[1];const n=EXERCISE_MAP.get(id);if(n)link.textContent=n;});
   }
 
   function persistExistingFields() {
