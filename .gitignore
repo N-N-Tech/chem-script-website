@@ -1,0 +1,16 @@
+# Local/editor-generated files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+dist/
+build/
+*.zip
