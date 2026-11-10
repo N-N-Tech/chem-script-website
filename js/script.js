@@ -772,20 +772,22 @@
       ctx.fillText('relative number of particles', 10, margin.top + 10);
       ctx.fillText('particle speed', margin.left + w - 90, margin.top + h + 24);
       const scale = T / 300;
+      // Use a common vertical scale and the Maxwell speed distribution.
+      // The factor scale^(-3/2) keeps the area under the distribution constant.
+      // Reference maximum: the peak at the lowest slider temperature (200 K).
+      const referenceMaxY = Math.exp(-1) / Math.sqrt(Number(slider.min) / 300);
       const points = [];
-      let maxY = 0;
       for (let i = 0; i <= 300; i += 1) {
         const x = i / 300 * 4.5;
-        const y = (x * x) * Math.exp(-(x * x) / scale);
+        const y = (x * x) * Math.exp(-(x * x) / scale) / Math.pow(scale, 1.5);
         points.push({x, y});
-        if (y > maxY) maxY = y;
       }
       ctx.strokeStyle = '#1f5d86';
       ctx.lineWidth = 2.2;
       ctx.beginPath();
       points.forEach((p, i) => {
         const px = margin.left + (i / 300) * w;
-        const py = margin.top + h - (p.y / maxY) * h * 0.92;
+        const py = margin.top + h - (p.y / referenceMaxY) * h * 0.92;
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       });
