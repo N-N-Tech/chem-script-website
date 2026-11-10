@@ -1,0 +1,250 @@
+% ============================================================
+% Zentrales Layout fuer das Chemie-Skript
+% Absichtlich einfach gehalten: keine absoluten Positionen.
+% Compiler in Overleaf: pdfLaTeX
+% ============================================================
+
+% --- Pakete --------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{xcolor}       % Farben fuer Ueberschriften und Boxen
+\usepackage[a4paper,margin=20mm,top=25mm,bottom=22mm,
+            headheight=20pt,headsep=8mm,footskip=12mm]{geometry} % Seitenraender
+\usepackage{graphicx}     % Abbildungen einbinden
+\usepackage{amsmath}      % Mathematische Formeln (z.B. Brueche)
+\usepackage{needspace}    % Aufgaben samt nachfolgender Abbildung zusammenhalten
+\usepackage{fancyhdr}     % Kopf- und Fusszeile
+\usepackage{titlesec}     % Normale LaTeX-Ueberschriften gestalten
+\usepackage{microtype}    % Typografisch bessere Buchstaben- und Wortabstaende
+\usepackage{parskip}      % Absatzabstand statt Absatzeinzug
+\usepackage{tcolorbox}    % Blaue Infoboxen
+\usepackage{tabularray}   % Tabellen mit gut kontrollierbaren Zellen
+% Keine automatisch erzeugten 'Table 1'-Beschriftungen an langen Arbeitsblatt-Tabellen.
+\SetTblrTemplate{caption}{empty}
+\SetTblrTemplate{capcont}{empty}
+\SetTblrTemplate{contfoot}{empty}
+\usepackage{wrapfig}      % Textumfluss bei Bildern (in einigen Kapiteln)
+\usepackage{ragged2e}     % Verbesserter Flattersatz mit Silbentrennung
+\usepackage{enumitem}     % Anpassbare Aufzählungen und Nummerierungen
+\usepackage[outline]{contour} % Umrandung einzelner Buchstaben
+\usepackage[british]{babel} % Britisches Englisch und Silbentrennung
+\usepackage[hidelinks]{hyperref} % Klickbare Links im PDF
+\usepackage{pgfplots} % Diagramme direkt in LaTeX
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{patterns}
+\usepackage{caption}
+\usepackage{chemfig}
+\usepackage[version=4]{mhchem}
+
+% --- Schrift und Farben --------------------------------------
+\usepackage{lmodern}
+
+\definecolor{DeepBlue}{HTML}{233B53}
+\definecolor{InfoBlue}{HTML}{ECF9FF}
+\definecolor{TableGrid}{HTML}{CCD3D9}
+
+% Absichtlich normale LaTeX-Trennung und Textsatz verwenden.
+% Keine manuellen globalen Zeilenhoehen oder Umbruchverbote.
+
+% --- Zeilenabstand -------------------------------------------
+\linespread{1.08} % Etwas lockererer Zeilenabstand
+\setlength{\parindent}{0pt} % Keine Einrückung zu Beginn eines Absatzes
+\setlength{\parskip}{0.4em} % Kleiner Abstand zwischen Absätzen
+
+% --- Kopf- und Fusszeile -------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=12pt]{images/gkg-logo.png}\hspace{0.4em}\footnotesize\bfseries Chemistry GKG (Nl)}
+\fancyhead[C]{\footnotesize\bfseries\CurrentYear}
+\fancyhead[R]{\footnotesize\bfseries\ScriptTitle}
+\fancyfoot[L]{\scriptsize\copyright\ GKG}
+\fancyfoot[C]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% --- Titel ---------------------------------------------------
+% Weisse Schrift mit dunkelblauer Buchstabenkontur
+\newcommand{\OutlinedChapterTitle}[1]{%
+  \begin{center}
+    \contourlength{0.8pt}
+    {\sffamily\itshape\fontsize{28}{28}\selectfont
+      \textcolor{white}{\contour{DeepBlue}{#1}}}
+      \vspace{10pt}
+  \end{center}
+}
+
+% Bemerkung am unteren rechten Seitenrand
+\newcommand{\ObjectivesNote}[1]{%
+  \par\vfill
+  \hfill{\color{DeepBlue}\rule{20mm}{0.8pt}}\par
+  \smallskip
+  \hfill{\footnotesize\bfseries #1}\par
+}
+
+% --- Ueberschriften ------------------------------------------
+% Regulare LaTeX-Gliederung; spaeter auch \section{...} etc. moeglich.
+\titleformat{\section}{\Large\bfseries\color{DeepBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{DeepBlue}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{DeepBlue}}{\thesubsubsection}{0.6em}{}
+\titleformat{\paragraph}[block]{\normalfont\normalsize\bfseries}
+{}{0pt}{}
+\titlespacing*{\section}{0pt}{2.2ex plus .6ex}{1ex}
+\titlespacing*{\subsection}{0pt}{1.6ex plus .4ex}{.7ex}
+\titlespacing*{\subsubsection}{0pt}{1.2ex plus .3ex}{.5ex}
+\titlespacing*{\paragraph}{0pt}{0.8ex}{0ex}
+
+% Kompatibilitaet mit den bereits erstellten Kapiteln.
+% Die Nummern stehen dort noch im Text, deshalb Sternvarianten.
+\newcommand{\HOne}[1]{\section{#1}}
+\newcommand{\HTwo}[1]{\subsection{#1}}
+\newcommand{\HThree}[1]{\subsubsection*{#1}}
+\newcommand{\HFour}[1]{\paragraph*{#1}}
+
+% --- Infoboxen -------------------------------------------------
+% Einheitlicher Abstand vor und nach Infoboxen
+\newlength{\BoxSpacing}
+\setlength{\BoxSpacing}{2ex}
+% Infobox
+% Gleiche Innenabstaende oben und unten, keine negativen Abstaende.
+\newtcolorbox{InfoBox}{%
+  colback=InfoBlue,colframe=DeepBlue,
+  boxrule=0.6pt,arc=0pt,
+  left=6pt,right=6pt,top=6pt,bottom=6pt,
+  boxsep=0pt,before skip=\BoxSpacing,after skip=\BoxSpacing,
+  before upper={\RaggedRight\setlength{\parskip}{0pt}}
+  }
+\newcommand{\BoxHeading}[1]{%
+  {\bfseries\color{DeepBlue}#1}\par\smallskip}
+
+% Zweispaltige Infobox
+% Direkter Tabelleninhalt statt verschachtelter \parbox-Bloecke:
+% rowsep bestimmt den symmetrischen Abstand zur oberen/unteren Kante.
+
+\newcommand{\CompareBox}[4]{%
+  \begin{tcolorbox}[
+    colback=InfoBlue,colframe=DeepBlue,
+    boxrule=0.6pt,arc=0pt,
+    left=0pt,right=0pt,top=0pt,bottom=0pt,
+    boxsep=0pt,before skip=\BoxSpacing,after skip=\BoxSpacing
+  ]
+    \begin{tblr}{
+      width=\linewidth,
+      colspec={X[l,t] X[l,t]},
+      colsep=6pt,rowsep=6pt,
+      vline{2}={0.6pt,DeepBlue}
+    }
+      {\bfseries\color{DeepBlue}#1}\par\smallskip #2 &
+      {\bfseries\color{DeepBlue}#3}\par\smallskip #4
+    \end{tblr}
+  \end{tcolorbox}
+}
+
+
+% --- Standardtabellen ----------------------------------------
+% Einheitliches Design, Spaltenaufteilung bleibt individuell.
+
+\NewTblrEnviron{StandardTable}
+
+\SetTblrInner[StandardTable]{
+  width=\linewidth,
+  colsep=4pt,
+  rowsep=3pt,
+  % Normale Tabellenlinien
+  hlines={0.8pt,TableGrid},
+  vlines={0.8pt,TableGrid},
+  % Kopfzeile
+  row{1}={bg=InfoBlue,font=\bfseries\color{DeepBlue}},
+  hline{1,2}={1pt,DeepBlue},
+  vline{1-Z}={1}{1pt,DeepBlue}
+}
+
+% Abstände der Standardtabellen
+\newlength{\TableSpacing}
+\setlength{\TableSpacing}{1ex}
+
+% Abstand vor und nach jeder StandardTable
+\AddToHook{env/StandardTable/before}{\par\addvspace{\TableSpacing}}
+\AddToHook{env/StandardTable/after}{\par\addvspace{\TableSpacing}}
+
+% --- Aufgaben ------------------------------------------------
+
+% Kapitelnummer und automatischer Aufgabenzähler
+\newcounter{exercise}
+\newcommand{\ExerciseChapter}{\ScriptNumber}
+\renewcommand{\theexercise}{\ExerciseChapter-\arabic{exercise}}
+
+\newcommand{\Exercise}[2][]{%
+  \refstepcounter{exercise}
+  % Optionalen Bezeichner fuer Referenzen speichern
+  \if\relax\detokenize{#1}\relax
+  \else
+  \label{ex:#1}%
+  \fi
+  \par\smallskip
+  \begin{tblr}{
+    width=\linewidth,
+    colspec={Q[l,m,wd=16mm] X[l,m]},
+    colsep=5pt,rowsep=3pt,
+    hlines={0.6pt,DeepBlue},vlines={0.6pt,DeepBlue},
+    column{1}={bg=InfoBlue,font=\bfseries\color{DeepBlue}},
+    column{2}={font=\bfseries}
+  }
+    Ex \theexercise & #2
+  \end{tblr}\par\smallskip
+}
+
+
+% Teilaufgaben
+% Automatische Nummerierung a), b), c), ...
+\newlist{ExerciseParts}{enumerate}{1}
+
+\setlist[ExerciseParts]{
+  label=\alph*),
+  leftmargin=*,
+  topsep=0.5ex,
+  itemsep=0.5ex,
+  parsep=0pt
+}
+
+
+% Freier Platz fuer handschriftliche Antworten.
+\newcommand{\ResponseGap}[1][38pt]{\par\vspace{#1}}
+
+
+% Loesungen erhalten die aktuelle Exercise-Nummer aus dem jeweiligen Label.
+% Ein Listeneintrag sorgt dafuer, dass auch alle Folgezeilen und Absaetze
+% linksbuendig an derselben Textkante beginnen (haengende Nummer).
+% Syntax: \Solution{exercise-label}{Text der Loesung ...}
+\newcommand{\Solution}[2]{%
+  \begin{list}{}{%
+    \setlength{\leftmargin}{20mm}%
+    \setlength{\labelwidth}{16mm}%
+    \setlength{\labelsep}{4mm}%
+    \setlength{\rightmargin}{0pt}%
+    \setlength{\topsep}{0.6\baselineskip}%
+    \setlength{\itemsep}{0pt}%
+    \setlength{\parsep}{0.3em}%
+    \setlength{\partopsep}{0pt}%
+  }
+    \item[\textbf{\ref{ex:#1}}] #2
+  \end{list}%
+}
+
+% Einfache Ziele-Liste: gleicher linksbuendiger Satz fuer alle Bullet Points.
+\newcommand{\Objective}[1]{\par\noindent\hangindent=1.6em\hangafter=1 \textbullet\enspace #1\par}
+
+% --- Zeichenfelder -------------------------------------------
+% Weisse Box mit schwarzem Rahmen.
+% Breite und Höhe werden individuell festgelegt.
+
+\newtcolorbox{DrawingBox}[2]{%
+  width=#1,
+  height=#2,
+  colback=white,
+  colframe=black,
+  boxrule=0.8pt,
+  arc=0pt,
+  boxsep=0pt,
+  before skip=0pt,
+  after skip=0pt
+}

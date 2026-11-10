@@ -1,0 +1,435 @@
+{
+  "source_chapters": 8,
+  "web_chapters": 8,
+  "structural_counts": {
+    "objectives": {
+      "source": 24,
+      "html": 24
+    },
+    "exercises": {
+      "source": 30,
+      "html": 30
+    },
+    "solutions": {
+      "source": 22,
+      "html": 22
+    },
+    "info_boxes": {
+      "source": 12,
+      "html": 12
+    },
+    "tables": {
+      "source": 19,
+      "html": 19
+    },
+    "response_gaps": {
+      "source": 38,
+      "html": 38
+    },
+    "drawing_boxes": {
+      "source": 3,
+      "html": 3
+    },
+    "images": {
+      "source": 24,
+      "html": 24
+    },
+    "links": {
+      "source": 3,
+      "html": 3
+    }
+  },
+  "chapter_details": {
+    "00_objectives": {
+      "objectives": {
+        "source": 24,
+        "web": 24,
+        "match": true
+      },
+      "exercises": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "solutions": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "info_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "tables": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "response_gaps": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "drawing_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "images": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "links": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      }
+    },
+    "01_introduction": {
+      "objectives": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "exercises": {
+        "source": 1,
+        "web": 1,
+        "match": true
+      },
+      "solutions": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "info_boxes": {
+        "source": 4,
+        "web": 4,
+        "match": true
+      },
+      "tables": {
+        "source": 4,
+        "web": 4,
+        "match": true
+      },
+      "response_gaps": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "drawing_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "images": {
+        "source": 10,
+        "web": 10,
+        "match": true
+      },
+      "links": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      }
+    },
+    "02_models": {
+      "objectives": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "exercises": {
+        "source": 5,
+        "web": 5,
+        "match": true
+      },
+      "solutions": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "info_boxes": {
+        "source": 2,
+        "web": 2,
+        "match": true
+      },
+      "tables": {
+        "source": 2,
+        "web": 2,
+        "match": true
+      },
+      "response_gaps": {
+        "source": 7,
+        "web": 7,
+        "match": true
+      },
+      "drawing_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "images": {
+        "source": 2,
+        "web": 2,
+        "match": true
+      },
+      "links": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      }
+    },
+    "03_chemical_reactions": {
+      "objectives": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "exercises": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "solutions": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "info_boxes": {
+        "source": 2,
+        "web": 2,
+        "match": true
+      },
+      "tables": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "response_gaps": {
+        "source": 5,
+        "web": 5,
+        "match": true
+      },
+      "drawing_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "images": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "links": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      }
+    },
+    "04_properties": {
+      "objectives": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "exercises": {
+        "source": 16,
+        "web": 16,
+        "match": true
+      },
+      "solutions": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "info_boxes": {
+        "source": 3,
+        "web": 3,
+        "match": true
+      },
+      "tables": {
+        "source": 11,
+        "web": 11,
+        "match": true
+      },
+      "response_gaps": {
+        "source": 22,
+        "web": 22,
+        "match": true
+      },
+      "drawing_boxes": {
+        "source": 3,
+        "web": 3,
+        "match": true
+      },
+      "images": {
+        "source": 10,
+        "web": 10,
+        "match": true
+      },
+      "links": {
+        "source": 1,
+        "web": 1,
+        "match": true
+      }
+    },
+    "05_particle_model_applications": {
+      "objectives": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "exercises": {
+        "source": 8,
+        "web": 8,
+        "match": true
+      },
+      "solutions": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "info_boxes": {
+        "source": 1,
+        "web": 1,
+        "match": true
+      },
+      "tables": {
+        "source": 2,
+        "web": 2,
+        "match": true
+      },
+      "response_gaps": {
+        "source": 4,
+        "web": 4,
+        "match": true
+      },
+      "drawing_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "images": {
+        "source": 2,
+        "web": 2,
+        "match": true
+      },
+      "links": {
+        "source": 2,
+        "web": 2,
+        "match": true
+      }
+    },
+    "06_classification": {
+      "objectives": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "exercises": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "solutions": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "info_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "tables": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "response_gaps": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "drawing_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "images": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "links": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      }
+    },
+    "07_solutions": {
+      "objectives": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "exercises": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "solutions": {
+        "source": 22,
+        "web": 22,
+        "match": true
+      },
+      "info_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "tables": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "response_gaps": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "drawing_boxes": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "images": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      },
+      "links": {
+        "source": 0,
+        "web": 0,
+        "match": true
+      }
+    }
+  },
+  "tikz_svg_count": 19,
+  "formulas_svg_count": 125,
+  "math_rendering_errors": [],
+  "checks_passed": true,
+  "warnings": [],
+  "source_sha256": {
+    "00_objectives.tex": "49adf8b1336f3437a1162f5e59c1b45218443c768a8790fcce434e5f519e92d8",
+    "01_introduction.tex": "0b87a29f9b2db3f7bccffb044349f4de37f99d76308506a7a3421a57b31ca480",
+    "02_models.tex": "c574053a3a837bead32bd9b1510ee0b92f8194a72035a130f27be756f8285e01",
+    "03_chemical_reactions.tex": "dc670b898a5d1ab0d1066462ab8f4565571ed45f107ff4bf824418b790a20f25",
+    "04_properties.tex": "67ca499969940fbfbded9c01671874c85d64d4f185e9c34c7f1707414855a10d",
+    "05_particle_model_applications.tex": "df8c63d34ac6097582698d872c43f24bb99cdef0c1abac4f780acddf147250b7",
+    "06_classification.tex": "5524ad2356ab69f5b61502eb9f9ca9321aa6c9d7ffe1fe7880a8ca7042c63fc7",
+    "07_solutions.tex": "7ddf32add7acbf1b7d2d241f1c7067a09302da733eda41e4a3d498dac50f30c7"
+  }
+}
