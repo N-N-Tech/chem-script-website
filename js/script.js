@@ -289,7 +289,9 @@
     const label=el('input',{type:'text',placeholder:'Label text','aria-label':'Drawing label'});
     const undo=el('button',{type:'button',text:'Undo'}),redo=el('button',{type:'button',text:'Redo'}),zoom=el('button',{type:'button',text:'Enlarge'});
     const settings=el('div',{class:'drawing-settings'});settings.append(shades,size,colour,width,label);
-    controls.append(tool,settings,undo,redo,zoom);wrap.before(controls);
+    controls.append(tool,settings,undo,redo,zoom);
+    if(clearButton){clearButton.classList.remove('clear-drawing');clearButton.classList.add('drawing-clear');controls.append(clearButton);}
+    wrap.before(controls);
     function settingsVisibility(){const m=tool.value;shades.hidden=size.hidden=m!=='Particle';colour.hidden=['Particle','Move particle','Eraser'].includes(m);width.hidden=['Particle','Move particle','Text'].includes(m);label.hidden=m!=='Text';canvas.style.cursor=m==='Move particle'?'move':'crosshair';}
     tool.onchange=settingsVisibility;settingsVisibility();
     const snap=()=>({pixels:ic.getImageData(0,0,w,h),particles:copyParticles()});
@@ -332,14 +334,21 @@
     const finish=e=>{if(!gesture||gesture.pointer!==e.pointerId)return;gesture=null;save();};
     canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);canvas.addEventListener('lostpointercapture',finish);
     zoom.onclick=()=>{if(gesture)return;const dialog=el('dialog',{class:'drawing-dialog'}),close=el('button',{type:'button',class:'dialog-close',text:'Close enlarged drawing'});const slot=document.createComment('drawing location');controls.before(slot);dialog.append(close,controls,wrap);document.body.append(dialog);
-      dialog.addEventListener('close',()=>{slot.before(controls,wrap);slot.remove();dialog.remove();},{once:true});close.onclick=()=>dialog.close();dialog.showModal();};
+      dialog.addEventListener('close',()=>{slot.before(controls,wrap);slot.remove();dialog.remove();zoom.focus();},{once:true});close.onclick=()=>dialog.close();dialog.showModal();};
     render();
   }
 
   function initExistingCanvases() {
-    qsa('.draw-canvas').forEach((canvas) => {
-      const clear = canvas.parentElement?.querySelector('.clear-drawing');
-      initSingleCanvas(canvas, clear);
+    qsa('.draw-canvas').forEach(canvas=>{
+      const clear=canvas.parentElement?.querySelector('.clear-drawing');
+      const image=canvas.parentElement?.querySelector('.annotation-image');
+      if(image&&!image.complete){
+        // The drawing surface must use the actual illustration aspect ratio.
+        const init=()=>initSingleCanvas(canvas,clear);
+        image.addEventListener('load',init,{once:true});
+        image.addEventListener('error',init,{once:true});
+        image.loading='eager';
+      }else initSingleCanvas(canvas,clear);
     });
   }
 
@@ -533,7 +542,9 @@
     rows.forEach(c=>rightCol.append(createItem('right',c[3].textContent.trim(),c[4].innerHTML.trim())));
     clearBtn.onclick=()=>{pairMap={};active=null;status.textContent='All matches cleared.';persist();};
     center.append(status,clearBtn,connections,hidden);widget.append(leftCol,gap,rightCol,center,svg);
-    if(typeof ResizeObserver!=='undefined')new ResizeObserver(drawLines).observe(widget);window.addEventListener('resize',drawLines,{passive:true});
+    if(typeof ResizeObserver!=='undefined'){const ro=new ResizeObserver(drawLines);ro.observe(widget);ro.observe(leftCol);ro.observe(rightCol);}
+    qsa('img',widget).forEach(img=>img.addEventListener('load',drawLines));
+    window.addEventListener('resize',drawLines,{passive:true});
     render();return widget;
   }
 
@@ -774,12 +785,7 @@
   }
 
   function renumberExercises() {
-    // Remove deleted placeholder exercises first.
-    const ex7 = qs('#ex-ssdfsd');
-    ex7?.remove();
-    const ex29 = qs('#ex-irgend');
-    ex29?.remove();
-
+    // Visible numbering is derived from stable exercise IDs.
     qsa('section.exercise').forEach((section) => {
       const number = EXERCISE_MAP.get(section.id);
       if (!number) return;
@@ -853,6 +859,12 @@
         const area=el('div',{class:'zoom-image-area'}),copy=el('img',{src:img.src,alt:img.alt||'Enlarged image'});
         label.append(slider,value);controls.append(close,label);area.append(copy);dialog.append(controls,area);document.body.append(dialog);
         const update=()=>{value.textContent=slider.value+'%';copy.style.width=slider.value+'%';};slider.oninput=update;
+        // Desktop drag-to-pan; touch users can pan using normal scrolling.
+        let pan=null;
+        area.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||Number(slider.value)<=100)return;e.preventDefault();pan={x:e.clientX,y:e.clientY,left:area.scrollLeft,top:area.scrollTop,id:e.pointerId};area.setPointerCapture(e.pointerId);area.classList.add('is-panning');});
+        area.addEventListener('pointermove',e=>{if(pan&&pan.id===e.pointerId){area.scrollLeft=pan.left-(e.clientX-pan.x);area.scrollTop=pan.top-(e.clientY-pan.y);}});
+        const stop=()=>{pan=null;area.classList.remove('is-panning');};
+        area.addEventListener('pointerup',stop);area.addEventListener('pointercancel',stop);
         close.onclick=()=>dialog.close();dialog.addEventListener('close',()=>{dialog.remove();img.focus();},{once:true});dialog.showModal();update();
       };
       img.addEventListener('click',open);img.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
