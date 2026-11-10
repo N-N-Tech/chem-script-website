@@ -850,7 +850,7 @@
 
   function enableImageZoom() {
     qsa('article img').forEach(img=>{
-      if(img.closest('.drawing-wrap,.matching-widget,a'))return;
+      if(img.closest('.drawing-wrap,.matching-widget,.figure-input-overlay,a'))return;
       img.classList.add('zoomable-image');img.tabIndex=0;img.setAttribute('role','button');img.setAttribute('aria-label',(img.alt?img.alt+' — ':'')+'Enlarge image');img.title='Click to enlarge';
       const open=()=>{
         const dialog=el('dialog',{class:'image-lightbox'}),close=el('button',{type:'button',class:'dialog-close',text:'Close'});
