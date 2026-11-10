@@ -124,3 +124,7 @@
   .drawing-tools select,.drawing-tools button{font-size:.72rem;padding:4px 6px;}
   .drawing-dialog,.image-lightbox{width:96vw;padding:10px;}
 }
+
+.zoom-image-area.is-panning{cursor:grabbing;user-select:none;}
+.zoom-image-area.is-panning img{pointer-events:none;}
+.drawing-tools .drawing-clear{margin-left:auto;}
