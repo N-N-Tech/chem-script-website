@@ -256,68 +256,84 @@
   function initSingleCanvas(canvas, clearButton) {
     if (canvas.dataset.initialized === 'true') return;
     canvas.dataset.initialized = 'true';
-    let drawing = false;
-    const ctx = canvas.getContext('2d');
-
-    const drawSettings = () => {
-      ctx.strokeStyle = '#253d54';
-      ctx.lineWidth = 1.8 * (window.devicePixelRatio || 1);
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+    const wrap = canvas.parentElement;
+    // Keep one stable bitmap while resizing the on-screen view. The source
+    // illustration, if any, is a separate image and is never edited.
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(500, Math.min(1200, Math.round(rect.width || 600)));
+    const h = Math.max(100, Math.round(w * (rect.height || Number(canvas.getAttribute('height')) || 180) / (rect.width || 600)));
+    canvas.width = w; canvas.height = h;
+    const ink = document.createElement('canvas'); ink.width=w; ink.height=h;
+    const ic = ink.getContext('2d'), ctx = canvas.getContext('2d');
+    const id = ensurePersistId(canvas,'canvas');
+    let particles=[], ready=true, gesture=null, history=[], future=[];
+    const copyParticles=()=>particles.map(p=>({...p}));
+    const render=()=>{ctx.clearRect(0,0,w,h);ctx.drawImage(ink,0,0);
+      for(const p of particles){ctx.beginPath();ctx.arc(p.x*w,p.y*h,p.r*w,0,Math.PI*2);ctx.fillStyle=p.colour;ctx.fill();ctx.strokeStyle='#454545';ctx.lineWidth=Math.max(1,w/600);ctx.stroke();}
     };
-
-    const coords = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: (event.clientX - rect.left) * canvas.width / rect.width,
-        y: (event.clientY - rect.top) * canvas.height / rect.height
-      };
-    };
-
-    resizeCanvas(canvas, false);
-    drawSettings();
-    loadCanvas(canvas);
-
-    const redraw = () => {
-      const snap = canvas.toDataURL('image/png');
-      resizeCanvas(canvas, false);
-      drawSettings();
-      const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      img.src = snap;
-    };
-
-    const handleResize = () => {
-      try { redraw(); } catch { resizeCanvas(canvas); drawSettings(); }
-    };
-    window.addEventListener('resize', handleResize, {passive: true});
-
-    canvas.addEventListener('pointerdown', (event) => {
-      drawing = true;
-      canvas.setPointerCapture(event.pointerId);
-      const p = coords(event);
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
+    const save=()=>{render();try{const data={type:'canvas',value:canvas.toDataURL('image/png')};if(particles.length){data.ink=ink.toDataURL('image/png');data.particles=copyParticles();}localStorage.setItem(storageKey(id),JSON.stringify(data));}catch(e){console.warn('Drawing could not be saved',e);}};
+    try{const raw=localStorage.getItem(storageKey(id));if(raw){const data=JSON.parse(raw);if(data.type==='canvas'&&data.value){ready=false;const img=new Image();img.onload=()=>{ic.drawImage(img,0,0,w,h);particles=Array.isArray(data.particles)?data.particles.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.r)&&typeof p.colour==='string'):[];render();ready=true;};img.onerror=()=>{ready=true;};img.src=data.ink||data.value;}}}catch{}
+    const controls=el('div',{class:'drawing-tools'});
+    const tool=el('select',{'aria-label':'Drawing tool'});
+    ['Pen','Eraser','Circle','Line','Arrow','Text','Particle','Move particle'].forEach(t=>tool.append(el('option',{value:t,text:t})));
+    const shades=el('div',{class:'particle-shades','aria-label':'Particle shade'});
+    let selectedShade='#808080';
+    ['#e5e5e5','#b5b5b5','#808080','#505050','#202020'].forEach((c,i)=>{
+      const b=el('button',{type:'button',class:'particle-swatch','aria-label':'Grey '+(i+1),title:'Grey '+(i+1),'aria-pressed':String(c===selectedShade)});b.style.backgroundColor=c;
+      b.onclick=()=>{selectedShade=c;qsa('button',shades).forEach(x=>x.setAttribute('aria-pressed',String(x===b)));};shades.append(b);
     });
-    canvas.addEventListener('pointermove', (event) => {
-      if (!drawing) return;
-      const p = coords(event);
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
+    const size=el('select',{'aria-label':'Particle size'});
+    [['8','Small'],['13','Medium'],['20','Large']].forEach(([v,t])=>size.append(el('option',{value:v,text:t})));size.value='13';
+    const colour=el('input',{type:'color',value:'#253d54','aria-label':'Drawing colour'});
+    const width=el('input',{type:'range',min:'1',max:'8',value:'2','aria-label':'Stroke width',title:'Stroke width'});
+    const label=el('input',{type:'text',placeholder:'Label text','aria-label':'Drawing label'});
+    const undo=el('button',{type:'button',text:'Undo'}),redo=el('button',{type:'button',text:'Redo'}),zoom=el('button',{type:'button',text:'Enlarge'});
+    const settings=el('div',{class:'drawing-settings'});settings.append(shades,size,colour,width,label);
+    controls.append(tool,settings,undo,redo,zoom);wrap.before(controls);
+    function settingsVisibility(){const m=tool.value;shades.hidden=size.hidden=m!=='Particle';colour.hidden=['Particle','Move particle','Eraser'].includes(m);width.hidden=['Particle','Move particle','Text'].includes(m);label.hidden=m!=='Text';canvas.style.cursor=m==='Move particle'?'move':'crosshair';}
+    tool.onchange=settingsVisibility;settingsVisibility();
+    const snap=()=>({pixels:ic.getImageData(0,0,w,h),particles:copyParticles()});
+    const buttons=()=>{undo.disabled=!history.length;redo.disabled=!future.length;};
+    const remember=()=>{history.push(snap());if(history.length>12)history.shift();future=[];buttons();};
+    const restore=x=>{ic.putImageData(x.pixels,0,0);particles=x.particles.map(p=>({...p}));save();buttons();};
+    undo.onclick=()=>{if(!ready||gesture||!history.length)return;future.push(snap());restore(history.pop());};
+    redo.onclick=()=>{if(!ready||gesture||!future.length)return;history.push(snap());restore(future.pop());};buttons();
+    clearButton?.addEventListener('click',()=>{if(!ready)return;remember();ic.clearRect(0,0,w,h);particles=[];save();});
+    const position=e=>{const r=canvas.getBoundingClientRect();return{x:Math.max(0,Math.min(w,(e.clientX-r.left)*w/r.width)),y:Math.max(0,Math.min(h,(e.clientY-r.top)*h/r.height))};};
+    const scale=()=>w/600;
+    const hit=p=>{for(let i=particles.length-1;i>=0;i--){const q=particles[i];if(Math.hypot(p.x-q.x*w,p.y-q.y*h)<=q.r*w)return i;}return -1;};
+    function stroke(mode,a,b){
+      ic.save();ic.strokeStyle=colour.value;ic.fillStyle=colour.value;ic.lineWidth=Number(width.value)*scale();ic.lineCap='round';ic.lineJoin='round';
+      if(mode==='Eraser'){ic.globalCompositeOperation='destination-out';ic.lineWidth=16*scale();}
+      ic.beginPath();
+      if(mode==='Circle'){ic.arc(a.x,a.y,Math.hypot(b.x-a.x,b.y-a.y),0,Math.PI*2);ic.stroke();}
+      else if(mode==='Text'){ic.font=(16*scale())+'px sans-serif';ic.fillText(label.value,a.x,a.y);}
+      else{ic.moveTo(a.x,a.y);ic.lineTo(b.x===a.x&&b.y===a.y?b.x+.1:b.x,b.y);ic.stroke();
+        if(mode==='Arrow'){const angle=Math.atan2(b.y-a.y,b.x-a.x),l=12*scale();ic.beginPath();ic.moveTo(b.x-l*Math.cos(angle-.5),b.y-l*Math.sin(angle-.5));ic.lineTo(b.x,b.y);ic.lineTo(b.x-l*Math.cos(angle+.5),b.y-l*Math.sin(angle+.5));ic.stroke();}}
+      ic.restore();render();
+    }
+    canvas.addEventListener('pointerdown',e=>{
+      if(!ready||gesture)return;e.preventDefault();const p=position(e),mode=tool.value,index=hit(p);
+      if(mode==='Move particle'&&index<0)return;
+      if(mode==='Text'&&!label.value.trim())return;
+      remember();gesture={mode,start:p,last:p,index,base:ic.getImageData(0,0,w,h),pointer:e.pointerId};
+      canvas.setPointerCapture(e.pointerId);
+      if(mode==='Particle'){particles.push({x:p.x/w,y:p.y/h,r:Number(size.value)/600,colour:selectedShade});render();}
+      else if(mode==='Eraser'&&index>=0){particles.splice(index,1);render();}
+      else if(mode!=='Move particle')stroke(mode,p,p);
     });
-    const stop = () => {
-      if (!drawing) return;
-      drawing = false;
-      ctx.beginPath();
-      saveCanvas(canvas);
-    };
-    canvas.addEventListener('pointerup', stop);
-    canvas.addEventListener('pointercancel', stop);
-    canvas.addEventListener('pointerleave', stop);
-    clearButton?.addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      saveCanvas(canvas);
+    canvas.addEventListener('pointermove',e=>{
+      if(!gesture||gesture.pointer!==e.pointerId)return;const p=position(e),g=gesture;
+      if(g.mode==='Move particle'){const q=particles[g.index];if(q){q.x=p.x/w;q.y=p.y/h;render();}}
+      else if(g.mode==='Pen'||g.mode==='Eraser'){if(g.mode==='Eraser'){const i=hit(p);if(i>=0)particles.splice(i,1);}stroke(g.mode,g.last,p);}
+      else if(!['Particle','Text'].includes(g.mode)){ic.putImageData(g.base,0,0);stroke(g.mode,g.start,p);}
+      g.last=p;
     });
+    const finish=e=>{if(!gesture||gesture.pointer!==e.pointerId)return;gesture=null;save();};
+    canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);canvas.addEventListener('lostpointercapture',finish);
+    zoom.onclick=()=>{if(gesture)return;const dialog=el('dialog',{class:'drawing-dialog'}),close=el('button',{type:'button',class:'dialog-close',text:'Close enlarged drawing'});const slot=document.createComment('drawing location');controls.before(slot);dialog.append(close,controls,wrap);document.body.append(dialog);
+      dialog.addEventListener('close',()=>{slot.before(controls,wrap);slot.remove();dialog.remove();},{once:true});close.onclick=()=>dialog.close();dialog.showModal();};
+    render();
   }
 
   function initExistingCanvases() {
@@ -476,108 +492,49 @@
   }
 
   function makeMatchingWidget(table, persistBase) {
-    const rows = qsa('tr', table).map((tr) => qsa('td', tr));
-    const leftItems = rows.map((cells) => ({
-      label: cells[0]?.textContent.trim(),
-      text: cells[1]?.innerHTML.trim()
-    }));
-    const rightItems = rows.map((cells) => ({
-      label: cells[3]?.textContent.trim(),
-      html: cells[4]?.innerHTML.trim()
-    }));
-    const widget = el('div', {class: 'matching-widget'});
-    const leftCol = el('div', {class: 'matching-column'});
-    const center = el('div', {class: 'matching-center'});
-    const rightCol = el('div', {class: 'matching-column'});
-    const status = el('div', {class: 'matching-status', text: 'Click one item on the left and then one item on the right to create a connection.'});
-    const clearBtn = el('button', {type: 'button', class: 'toolbar-button small', text: 'Clear matches'});
-    const connections = el('div', {class: 'matching-connections'});
-    const hidden = el('input', {type: 'hidden'});
-    setPersistId(hidden, `${persistBase}-matches`);
-    persistField(hidden, 'input');
-
-    let activeSide = null;
-    let activeValue = null;
-    let pairMap = {};
-    try { pairMap = hidden.value ? JSON.parse(hidden.value) : {}; } catch { pairMap = {}; }
-
-    function persistMatches() {
-      hidden.value = JSON.stringify(pairMap);
-      saveField(hidden);
-      renderConnections();
+    const rows=qsa('tr',table).map(tr=>qsa('td',tr)).filter(c=>c.length>=5);
+    const widget=el('div',{class:'matching-widget'});
+    const leftCol=el('div',{class:'matching-column'}),rightCol=el('div',{class:'matching-column'}),gap=el('div',{class:'matching-gap'});
+    const center=el('div',{class:'matching-center'}),status=el('div',{class:'matching-status',text:'Drag between two items, or select one on each side.'});
+    const clearBtn=el('button',{type:'button',class:'toolbar-button small',text:'Clear matches'});
+    const connections=el('div',{class:'matching-connections'}),hidden=el('input',{type:'hidden'});
+    setPersistId(hidden,persistBase+'-matches');persistField(hidden,'input');
+    let pairMap={},active=null,drag=null,ignoreClick=false;try{pairMap=JSON.parse(hidden.value||'{}')||{};}catch{}
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('matching-lines');svg.setAttribute('aria-hidden','true');
+    const items=()=>qsa('.match-item',widget);
+    const find=(side,value)=>items().find(n=>n.dataset.side===side&&n.dataset.value===value);
+    function line(x1,y1,x2,y2,preview=false){
+      const p=document.createElementNS(svg.namespaceURI,'path');const dx=(x2-x1)*.48;
+      p.setAttribute('d',`M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`);
+      p.setAttribute('fill','none');p.setAttribute('stroke','#3478ad');p.setAttribute('stroke-width','2.7');if(preview)p.setAttribute('stroke-dasharray','5 4');svg.append(p);
     }
-
-    function createItem(side, item) {
-      const node = el('button', {type: 'button', class: 'match-item'});
-      node.dataset.side = side;
-      node.dataset.value = item.label;
-      const badge = el('span', {class: 'match-badge', text: item.label});
-      const body = el('span', {class: 'match-body'});
-      if (side === 'left') body.innerHTML = item.text;
-      else body.innerHTML = item.html;
-      node.append(badge, body);
-      node.addEventListener('click', () => {
-        qsa('.match-item.active', widget).forEach(n => n.classList.remove('active'));
-        if (side === 'right' && activeSide === 'left') {
-          pairMap[activeValue] = item.label;
-          activeSide = null;
-          activeValue = null;
-          status.textContent = 'Connection added.';
-          persistMatches();
-          return;
-        }
-        if (side === 'left' && activeSide === 'right') {
-          const existingLeft = Object.keys(pairMap).find(key => pairMap[key] === activeValue);
-          if (existingLeft) delete pairMap[existingLeft];
-          pairMap[item.label] = activeValue;
-          activeSide = null;
-          activeValue = null;
-          status.textContent = 'Connection added.';
-          persistMatches();
-          return;
-        }
-        activeSide = side;
-        activeValue = item.label;
-        node.classList.add('active');
-        status.textContent = side === 'left'
-          ? `Selected ${item.label}. Now choose a matching item on the right.`
-          : `Selected ${item.label}. Now choose a matching item on the left.`;
-      });
-      return node;
+    function point(n){const a=n.getBoundingClientRect(),b=widget.getBoundingClientRect();return {x:(n.dataset.side==='left'?a.right:a.left)-b.left,y:a.top+a.height/2-b.top};}
+    function drawLines(){const b=widget.getBoundingClientRect();if(!b.width||!b.height)return;svg.setAttribute('viewBox',`0 0 ${b.width} ${b.height}`);svg.replaceChildren();
+      Object.entries(pairMap).forEach(([l,r])=>{const a=find('left',l),c=find('right',r);if(a&&c){const p=point(a),q=point(c);line(p.x,p.y,q.x,q.y);}});
+      if(drag&&drag.moved){const p=point(drag.node);line(p.x,p.y,drag.x-b.left,drag.y-b.top,true);}
     }
-
-    function renderConnections() {
-      connections.innerHTML = '';
-      const entries = Object.entries(pairMap);
-      if (!entries.length) {
-        connections.textContent = 'No matches stored yet.';
-      } else {
-        entries.forEach(([left, right]) => {
-          connections.append(el('div', {class: 'connection-chip', text: `${left} ↔ ${right}`}));
-        });
-      }
-      qsa('.match-item', widget).forEach((node) => node.classList.remove('matched'));
-      entries.forEach(([left, right]) => {
-        qsa(`.match-item[data-side="left"][data-value="${CSS.escape(left)}"]`, widget).forEach(n => n.classList.add('matched'));
-        qsa(`.match-item[data-side="right"][data-value="${CSS.escape(right)}"]`, widget).forEach(n => n.classList.add('matched'));
-      });
+    function render(){connections.replaceChildren();items().forEach(n=>{n.classList.toggle('active',n===active);n.classList.toggle('matched',n.dataset.side==='left'?!!pairMap[n.dataset.value]:Object.values(pairMap).includes(n.dataset.value));});
+      Object.entries(pairMap).forEach(([l,r])=>{const b=el('button',{type:'button',class:'connection-chip',text:l+' ↔ '+r+' ×','aria-label':'Remove connection '+l+' to '+r});b.onclick=()=>{delete pairMap[l];persist();};connections.append(b);});
+      if(!Object.keys(pairMap).length)connections.textContent='No matches stored yet.';requestAnimationFrame(drawLines);
     }
-
-    leftItems.forEach((item) => leftCol.append(createItem('left', item)));
-    rightItems.forEach((item) => rightCol.append(createItem('right', item)));
-
-    clearBtn.addEventListener('click', () => {
-      pairMap = {};
-      activeSide = null;
-      activeValue = null;
-      status.textContent = 'All matches cleared.';
-      persistMatches();
-    });
-
-    center.append(status, clearBtn, connections, hidden);
-    widget.append(leftCol, center, rightCol);
-    renderConnections();
-    return widget;
+    function persist(){hidden.value=JSON.stringify(pairMap);saveField(hidden);render();}
+    function pair(a,b){const l=a.dataset.side==='left'?a:b,r=a.dataset.side==='right'?a:b;if(l.dataset.side===r.dataset.side)return;
+      Object.keys(pairMap).forEach(k=>{if(pairMap[k]===r.dataset.value)delete pairMap[k];});pairMap[l.dataset.value]=r.dataset.value;active=null;status.textContent='Connection added. Select another pair to continue.';persist();}
+    function createItem(side,label,html){
+      const n=el('button',{type:'button',class:'match-item'});n.dataset.side=side;n.dataset.value=label;
+      n.append(el('span',{class:'match-badge',text:label}),el('span',{class:'match-body',html}));
+      n.addEventListener('click',()=>{if(ignoreClick){ignoreClick=false;return;}if(active&&active.dataset.side!==side)pair(active,n);else{active=active===n?null:n;status.textContent=active?'Select an item on the other side.':'Drag or select a pair.';render();}});
+      n.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={node:n,id:e.pointerId,x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false};n.setPointerCapture(e.pointerId);});
+      n.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;drag.x=e.clientX;drag.y=e.clientY;drag.moved=drag.moved||Math.hypot(drag.x-drag.sx,drag.y-drag.sy)>6;if(drag.moved)drawLines();});
+      n.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const d=drag;drag=null;if(d.moved){ignoreClick=true;const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.match-item');if(target&&widget.contains(target)&&target.dataset.side!==side)pair(n,target);else drawLines();setTimeout(()=>{ignoreClick=false;},100);}});
+      n.addEventListener('pointercancel',()=>{drag=null;drawLines();});return n;
+    }
+    rows.forEach(c=>leftCol.append(createItem('left',c[0].textContent.trim(),c[1].innerHTML.trim())));
+    rows.forEach(c=>rightCol.append(createItem('right',c[3].textContent.trim(),c[4].innerHTML.trim())));
+    clearBtn.onclick=()=>{pairMap={};active=null;status.textContent='All matches cleared.';persist();};
+    center.append(status,clearBtn,connections,hidden);widget.append(leftCol,gap,rightCol,center,svg);
+    if(typeof ResizeObserver!=='undefined')new ResizeObserver(drawLines).observe(widget);window.addEventListener('resize',drawLines,{passive:true});
+    render();return widget;
   }
 
   function enhanceMatchingExercises() {
@@ -885,6 +842,23 @@
     }
   }
 
+  function enableImageZoom() {
+    qsa('article img').forEach(img=>{
+      if(img.closest('.drawing-wrap,.matching-widget,a'))return;
+      img.classList.add('zoomable-image');img.tabIndex=0;img.setAttribute('role','button');img.setAttribute('aria-label',(img.alt?img.alt+' — ':'')+'Enlarge image');img.title='Click to enlarge';
+      const open=()=>{
+        const dialog=el('dialog',{class:'image-lightbox'}),close=el('button',{type:'button',class:'dialog-close',text:'Close'});
+        const controls=el('div',{class:'image-zoom-controls'}),label=el('label',{text:'Zoom '});
+        const slider=el('input',{type:'range',min:'50',max:'300',value:'100','aria-label':'Zoom image'}),value=el('span',{text:'100%'});
+        const area=el('div',{class:'zoom-image-area'}),copy=el('img',{src:img.src,alt:img.alt||'Enlarged image'});
+        label.append(slider,value);controls.append(close,label);area.append(copy);dialog.append(controls,area);document.body.append(dialog);
+        const update=()=>{value.textContent=slider.value+'%';copy.style.width=slider.value+'%';};slider.oninput=update;
+        close.onclick=()=>dialog.close();dialog.addEventListener('close',()=>{dialog.remove();img.focus();},{once:true});dialog.showModal();update();
+      };
+      img.addEventListener('click',open);img.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+    });
+  }
+
   function run() {
     initMenu();
     renumberExercises();
@@ -895,6 +869,7 @@
     persistExistingFields();
     initExistingCanvases();
     embedPhetIframes();
+    enableImageZoom();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
