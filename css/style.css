@@ -128,3 +128,81 @@
 .zoom-image-area.is-panning{cursor:grabbing;user-select:none;}
 .zoom-image-area.is-panning img{pointer-events:none;}
 .drawing-tools .drawing-clear{margin-left:auto;}
+
+
+/* V24 refinement: preserve the canvas bitmap aspect ratio in compact and enlarged views. */
+.drawing-wrap .draw-canvas:not(.overlay-canvas){
+  width:100%;
+  height:auto !important;
+  aspect-ratio:auto;
+}
+.drawing-tools.compact-drawing-tools{
+  max-width:380px;
+  margin:10px auto 0;
+  padding:5px 6px;
+  gap:5px;
+  border-radius:6px;
+  background:#f8fafc;
+  box-shadow:none;
+  align-items:center;
+}
+.drawing-tools.compact-drawing-tools.drawing-tools-annotation{max-width:780px;}
+.drawing-tools.compact-drawing-tools.drawing-tools-small{max-width:100%;}
+.drawing-tools.compact-drawing-tools>select{
+  width:112px;
+  max-width:100%;
+  min-height:28px;
+  padding:3px 5px;
+  font-size:.75rem;
+  flex:0 1 112px;
+}
+.drawing-tools.compact-drawing-tools .drawing-settings{gap:4px;flex:0 1 auto;}
+.drawing-tools.compact-drawing-tools .drawing-settings select{
+  min-height:28px;
+  padding:3px 4px;
+  font-size:.73rem;
+}
+.drawing-tools.compact-drawing-tools .drawing-settings input[type="range"]{width:56px;}
+.drawing-tools.compact-drawing-tools .drawing-settings input[type="text"]{width:92px;min-height:28px;}
+.drawing-tools.compact-drawing-tools .drawing-settings input[type="color"]{width:28px;height:28px;}
+.drawing-tools.compact-drawing-tools .particle-shades{gap:5px;padding:2px;}
+.drawing-tools.compact-drawing-tools .particle-swatch{
+  flex:0 0 19px;width:19px;height:19px;min-height:19px;
+  border-radius:50%;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  margin-left:auto;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions .drawing-action{
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 29px;
+  width:29px;height:28px;min-height:28px;
+  padding:3px;
+  border:1px solid transparent;
+  border-radius:5px;
+  background:transparent;
+  color:#344c60;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions .drawing-action:hover:not(:disabled){
+  background:#e5f0f7;
+  border-color:#cadbe7;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions .drawing-action:disabled{
+  opacity:.35;background:transparent;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions .drawing-clear{
+  margin-left:4px;
+  border-left:1px solid #d6e1e9;
+  border-radius:0 5px 5px 0;
+}
+.drawing-tools.compact-drawing-tools+.drawing-wrap{margin-top:4px;}
+.drawing-dialog .drawing-tools.compact-drawing-tools{max-width:none;width:100%;}
+@media(max-width:650px){
+  .drawing-tools.compact-drawing-tools{padding:4px;gap:4px;}
+  .drawing-tools.compact-drawing-tools>select{width:104px;flex-basis:104px;}
+  .drawing-tools.compact-drawing-tools .drawing-actions{gap:1px;}
+  .drawing-tools.compact-drawing-tools .drawing-actions .drawing-action{width:27px;flex-basis:27px;}
+}
