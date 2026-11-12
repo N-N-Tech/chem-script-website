@@ -109,6 +109,40 @@ jobs:
               await page.reload({waitUntil:'domcontentloaded'});
               assert.equal(await page.locator('#ex-mix-types + .table-scroll table tr').nth(1).locator('td').first().locator('input').nth(1).inputValue(),'test mixture');
               await page.locator('#ex-mix-types + .table-scroll table tr').nth(1).locator('td').first().locator('input').nth(1).fill('');
+              // Ex 1-23: all table columns and the toolbar must retain their
+              // dimensions when the drawing tool changes.
+              const geometry=async()=>page.evaluate(()=>{
+                const table=document.querySelector('#ex-mix-types + .table-scroll table');
+                const board=document.querySelector('#ex-mix-types + .table-scroll .table-drawing');
+                const tools=board.previousElementSibling;
+                const r=e=>{const b=e.getBoundingClientRect();return {left:b.left,right:b.right,top:b.top,width:b.width};};
+                return {
+                  table:r(table),
+                  headings:[...table.querySelectorAll('th')].map(r),
+                  tools:r(tools),
+                  tool:r(tools.querySelector('select[aria-label="Drawing tool"]')),
+                  shade:r(tools.querySelector('.particle-shade-picker')),
+                  size:r(tools.querySelector('select[aria-label="Particle size"]')),
+                  actions:r(tools.querySelector('.drawing-actions')),
+                  scroll:table.closest('.table-scroll').scrollWidth
+                };
+              });
+              await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Pen');
+              const penGeometry=await geometry();
+              await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Particle');
+              const particleGeometry=await geometry();
+              for(let i=0;i<3;i++)
+                assert.ok(Math.abs(penGeometry.headings[i].width-particleGeometry.headings[i].width)<1,
+                  'Ex 1-23 column '+i+' changes width with Particle mode: '+JSON.stringify({penGeometry,particleGeometry}));
+              assert.ok(Math.abs(penGeometry.tools.width-particleGeometry.tools.width)<1,
+                'Ex 1-23 toolbar changes width with Particle mode');
+              assert.ok(particleGeometry.shade.left-particleGeometry.tool.right<=6,
+                'Particle shade picker detached from main tool dropdown: '+JSON.stringify(particleGeometry));
+              assert.ok(particleGeometry.size.left-particleGeometry.shade.right<=6,
+                'Particle size detached from shade picker: '+JSON.stringify(particleGeometry));
+              assert.ok(particleGeometry.actions.right<=particleGeometry.tools.right+1,
+                'Toolbar action buttons overflow: '+JSON.stringify(particleGeometry));
+              console.log('Ex 1-23 toolbar and table geometry OK:',{penGeometry,particleGeometry});
               const shades=mixTools.locator('details.particle-shade-picker');
               const drawingTool=mixTools.locator('select[aria-label="Drawing tool"]');
               await drawingTool.selectOption('Pen');
