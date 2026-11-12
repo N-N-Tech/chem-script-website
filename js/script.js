@@ -278,21 +278,58 @@
     if(wrap.classList.contains('table-drawing')||wrap.classList.contains('mini-draw'))controls.classList.add('drawing-tools-small');
     const tool=el('select',{'aria-label':'Drawing tool'});
     ['Pen','Eraser','Circle','Line','Arrow','Text','Particle','Move particle'].forEach(t=>tool.append(el('option',{value:t,text:t})));
-    const shades=el('select',{'aria-label':'Particle shade',title:'Particle shade'});
+    // A visual shade dropdown: avoid text labels that make narrow table
+    // drawing toolbars wrap. Option labels remain available to screen readers.
+    const shades=el('details',{class:'particle-shade-picker'});
+    const shadeTrigger=el('summary',{'aria-label':'Particle shade',title:'Particle shade'});
+    const shadePreview=el('span',{class:'particle-shade-current','aria-hidden':'true'});
+    let selectedShade='#808080';
+    shadePreview.style.backgroundColor=selectedShade;
+    shadeTrigger.append(shadePreview);
+    const shadeMenu=el('div',{class:'particle-shade-menu',role:'listbox','aria-label':'Particle shade options'});
     const greyOptions=[
-      ['#e5e5e5','Grey 1 – very light'],['#b5b5b5','Grey 2 – light'],
-      ['#808080','Grey 3 – medium'],['#505050','Grey 4 – dark'],
-      ['#202020','Grey 5 – very dark']
+      ['#e5e5e5','Very light grey'],['#b5b5b5','Light grey'],
+      ['#808080','Medium grey'],['#505050','Dark grey'],
+      ['#202020','Very dark grey']
     ];
-    greyOptions.forEach(([value,text])=>{
-      const option=el('option',{value,text});
-      option.style.backgroundColor=value;
-      option.style.color=['#505050','#202020'].includes(value)?'#ffffff':'#111111';
-      shades.append(option);
+    const shadeButtons=[];
+    greyOptions.forEach(([value,name])=>{
+      const option=el('button',{type:'button',role:'option','aria-label':name,title:name,'aria-selected':String(value===selectedShade)});
+      option.dataset.shade=value;
+      const swatch=el('span',{class:'particle-shade-swatch','aria-hidden':'true'});
+      swatch.style.backgroundColor=value;
+      option.append(swatch);
+      option.addEventListener('click',()=>{
+        selectedShade=value;
+        shadePreview.style.backgroundColor=value;
+        shadeButtons.forEach(b=>b.setAttribute('aria-selected',String(b===option)));
+        shades.open=false;
+        shadeTrigger.focus();
+      });
+      shadeMenu.append(option);
+      shadeButtons.push(option);
     });
-    shades.value='#808080';
+    shades.append(shadeTrigger,shadeMenu);
+    const positionShadeMenu=()=>{
+      if(!shades.open)return;
+      const rect=shadeTrigger.getBoundingClientRect();
+      const height=shadeMenu.offsetHeight;
+      const width=shadeMenu.offsetWidth;
+      const below=rect.bottom+4;
+      shadeMenu.style.top=(below+height>window.innerHeight-8?Math.max(8,rect.top-height-4):below)+'px';
+      shadeMenu.style.left=Math.min(Math.max(8,rect.left),Math.max(8,window.innerWidth-width-8))+'px';
+    };
+    shades.addEventListener('toggle',positionShadeMenu);
+    shades.addEventListener('keydown',e=>{
+      if(e.key==='Escape'&&shades.open){e.preventDefault();shades.open=false;shadeTrigger.focus();}
+    });
+    document.addEventListener('pointerdown',e=>{
+      if(shades.open&&!shades.contains(e.target))shades.open=false;
+    });
+    window.addEventListener('scroll',()=>{if(shades.open)shades.open=false;},true);
+    window.addEventListener('resize',()=>{if(shades.open)positionShadeMenu();},{passive:true});
     const size=el('select',{'aria-label':'Particle size'});
-    [['8','Small'],['13','Medium'],['20','Large']].forEach(([v,t])=>size.append(el('option',{value:v,text:t})));size.value='13';
+    [['8','S'],['13','M'],['20','L']].forEach(([v,t])=>size.append(el('option',{value:v,text:t})));size.value='13';
     const colour=el('input',{type:'color',value:'#000000','aria-label':'Drawing colour'});
     const width=el('input',{type:'range',min:'1',max:'8',value:'2','aria-label':'Stroke width',title:'Stroke width'});
     const label=el('input',{type:'text',placeholder:'Label text','aria-label':'Drawing label'});
@@ -340,7 +377,7 @@
       if(mode==='Text'&&!label.value.trim())return;
       remember();gesture={mode,start:p,last:p,index,base:ic.getImageData(0,0,w,h),pointer:e.pointerId};
       canvas.setPointerCapture(e.pointerId);
-      if(mode==='Particle'){particles.push({x:p.x/w,y:p.y/h,r:Number(size.value)/600,colour:shades.value});render();}
+      if(mode==='Particle'){particles.push({x:p.x/w,y:p.y/h,r:Number(size.value)/600,colour:selectedShade});render();}
       else if(mode==='Eraser'&&index>=0){particles.splice(index,1);render();}
       else if(mode!=='Move particle')stroke(mode,p,p);
     });
