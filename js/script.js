@@ -349,7 +349,7 @@
     if(clearButton){clearButton.classList.remove('clear-drawing');clearButton.classList.add('drawing-action','drawing-clear');clearButton.innerHTML=symbol('clear');clearButton.title='Clear drawing';actions.append(clearButton);}
     controls.append(tool,settings,actions);
     wrap.before(controls);
-    function settingsVisibility(){const m=tool.value;shades.hidden=size.hidden=m!=='Particle';colour.hidden=['Particle','Move particle','Eraser'].includes(m);width.hidden=['Particle','Move particle','Text'].includes(m);label.hidden=m!=='Text';canvas.style.cursor=m==='Move particle'?'move':'crosshair';}
+    function settingsVisibility(){const m=tool.value;controls.classList.toggle('particle-mode',m==='Particle');shades.hidden=size.hidden=m!=='Particle';colour.hidden=['Particle','Move particle','Eraser'].includes(m);width.hidden=['Particle','Move particle','Text'].includes(m);label.hidden=m!=='Text';canvas.style.cursor=m==='Move particle'?'move':'crosshair';}
     tool.onchange=settingsVisibility;settingsVisibility();
     const snap=()=>({pixels:ic.getImageData(0,0,w,h),particles:copyParticles()});
     const buttons=()=>{undo.disabled=!history.length;redo.disabled=!future.length;};
