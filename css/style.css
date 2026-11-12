@@ -359,3 +359,40 @@
 .drawing-tools.compact-drawing-tools.particle-mode .drawing-actions{
   margin-left:auto;
 }
+
+
+/* Ex 1-23: the Text tool needs the same single row as the Particle tool.
+   Scope the tighter spacing to this table; other drawing boards are unchanged. */
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools{
+  flex-wrap:nowrap;
+  justify-content:flex-start;
+  gap:3px;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-settings{
+  flex:0 0 auto;
+  flex-wrap:nowrap;
+  min-width:0;
+  gap:3px;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-settings input[aria-label="Drawing label"]{
+  width:54px;
+  min-width:0;
+  max-width:54px;
+  box-sizing:border-box;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-actions{
+  flex:0 0 auto;
+  gap:1px;
+  margin-left:auto;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-actions .drawing-action{
+  width:23px;
+  flex:0 0 23px;
+  min-width:23px;
+  height:27px;
+  min-height:27px;
+  padding:3px;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-actions .drawing-clear{
+  margin-left:2px;
+}
