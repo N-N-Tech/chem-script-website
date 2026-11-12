@@ -237,3 +237,93 @@
   width:100%;
   max-width:100%;
 }
+
+
+/* V24: single-line particle controls with a visual greyscale picker. */
+.drawing-tools.compact-drawing-tools.particle-mode{
+  flex-wrap:nowrap;
+  justify-content:space-between;
+  gap:3px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode>select[aria-label="Drawing tool"]{
+  width:94px;
+  flex:1 1 80px;
+  min-width:74px;
+  padding:3px 2px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-settings{
+  flex:0 0 auto;
+  flex-wrap:nowrap;
+  gap:3px;
+}
+.drawing-tools.compact-drawing-tools .drawing-settings select[aria-label="Particle size"]{
+  width:36px;
+  min-width:0;
+  max-width:36px;
+  flex:0 0 36px;
+  padding:3px 1px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-actions{
+  flex:0 0 auto;
+  margin-left:0;
+  gap:0;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-actions .drawing-action{
+  width:25px;
+  flex-basis:25px;
+  height:27px;
+  min-height:27px;
+  padding:3px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-actions .drawing-clear{margin-left:2px;}
+.drawing-tools.compact-drawing-tools .particle-shade-picker{
+  display:block;
+  position:relative;
+  width:34px;
+  min-width:34px;
+  flex:0 0 34px;
+  font-size:.75rem;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-picker[hidden]{display:none!important;}
+.drawing-tools.compact-drawing-tools .particle-shade-picker summary{
+  display:flex;align-items:center;justify-content:flex-start;gap:2px;
+  width:34px;height:28px;padding:3px 2px;
+  background:white;color:#314d60;border:1px solid #c5d5e1;
+  border-radius:5px;cursor:pointer;list-style:none;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-picker summary::-webkit-details-marker{display:none;}
+.drawing-tools.compact-drawing-tools .particle-shade-picker summary::after{
+  content:"";margin-left:auto;margin-right:2px;
+  width:0;height:0;border-left:3px solid transparent;
+  border-right:3px solid transparent;border-top:4px solid currentColor;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-current{
+  width:15px;height:15px;flex:0 0 15px;border:1px solid #606c76;border-radius:50%;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-menu{
+  position:fixed;z-index:10000;display:flex;gap:4px;
+  width:max-content;max-width:calc(100vw - 16px);
+  padding:6px;background:white;border:1px solid #bccbd7;
+  border-radius:7px;box-shadow:0 6px 18px #182a4050;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-picker:not([open]) .particle-shade-menu{display:none;}
+.drawing-tools.compact-drawing-tools .particle-shade-menu button{
+  width:29px;height:29px;min-height:29px;padding:4px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid transparent;border-radius:5px;background:transparent;cursor:pointer;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-menu button[aria-selected="true"]{
+  border-color:#3478ad;background:#e6f2f8;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-menu button:focus-visible,
+.drawing-tools.compact-drawing-tools .particle-shade-picker summary:focus-visible{
+  outline:2px solid #3478ad;outline-offset:1px;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-swatch{
+  display:block;width:20px;height:20px;border:1px solid #586777;border-radius:50%;
+}
+@media(max-width:650px){
+  .drawing-tools.compact-drawing-tools.particle-mode{padding:4px 2px;gap:2px;}
+  .drawing-tools.compact-drawing-tools.particle-mode>select[aria-label="Drawing tool"]{min-width:65px;flex-basis:68px;}
+  .drawing-tools.compact-drawing-tools.particle-mode .drawing-actions .drawing-action{width:23px;flex-basis:23px;}
+}
