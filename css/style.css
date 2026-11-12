@@ -69,3 +69,330 @@
 @media(max-width:950px){.matching-widget{grid-template-columns:1fr;}.matching-center{order:-1;}.figure-input-overlay .overlay-textarea{position:static;width:100%;min-height:46px;margin:8px 0 0;}.annotation-board{max-width:100%;}.worksheet-toolbar{align-items:flex-start;}}
 @media(max-width:640px){.response-row{grid-template-columns:1fr;}.response-label{text-align:left;}.toolbar-controls{width:100%;}.toolbar-button{flex:1 1 140px;}}
 @media print{.worksheet-toolbar,.toolbar-button,.matching-center,.boltzmann-widget{display:none !important;}.blank-input,.overlay-textarea{border:1px solid #bfc9d2;}}
+
+
+/* Interactive tools (phase 1) */
+.drawing-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:#f5f9fc;border:1px solid #d4e1eb;border-radius:7px;margin:1rem auto 0;max-width:780px;color:#253d54;}
+.drawing-tools select,.drawing-tools button,.drawing-tools input[type="text"],.dialog-close{font:inherit;font-size:.78rem;background:#fff;color:#253d54;border:1px solid #c5d5e1;border-radius:5px;padding:5px 8px;min-height:32px;max-width:100%;}
+.drawing-tools button,.dialog-close,.particle-swatch{cursor:pointer;}
+.drawing-tools button:hover,.dialog-close:hover{background:#e6f1f8;}
+.drawing-tools button:disabled{opacity:.45;cursor:default;}
+.drawing-settings,.particle-shades{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.drawing-settings [hidden]{display:none!important;}
+.drawing-settings input[type="range"]{width:72px;max-width:100%;}
+.drawing-settings input[type="color"]{width:32px;height:32px;padding:2px;border:1px solid #c5d5e1;border-radius:5px;background:white;}
+.drawing-settings input[type="text"]{width:125px;}
+.drawing-tools .particle-swatch{width:24px;height:24px;min-height:24px;flex:0 0 24px;padding:0;border:1px solid #555;border-radius:50%;}
+.drawing-tools .particle-swatch[aria-pressed="true"]{outline:2px solid #3478ad;outline-offset:2px;}
+.drawing-tools+.drawing-wrap{margin-top:6px;}
+.drawing-tools:focus-within,.zoomable-image:focus-visible,.match-item:focus-visible{outline:2px solid #3478ad;outline-offset:2px;}
+.drawing-dialog,.image-lightbox{width:min(94vw,1080px);max-width:none;max-height:92vh;overflow:auto;padding:18px;border:1px solid #b7cad9;border-radius:10px;background:#fff;color:#253d54;box-shadow:0 15px 60px #0004;}
+.drawing-dialog::backdrop,.image-lightbox::backdrop{background:rgba(19,35,51,.68);}
+.drawing-dialog .drawing-tools,.drawing-dialog .drawing-wrap{width:100%;max-width:none;}
+.drawing-dialog .drawing-wrap{margin:8px auto 0;}
+.drawing-dialog .annotation-board{max-width:none;}
+.drawing-dialog .draw-canvas:not(.overlay-canvas){width:100%;height:auto;}
+.dialog-close{font-size:.87rem;font-weight:600;}
+.zoomable-image{cursor:zoom-in;}
+.image-zoom-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.image-zoom-controls label{display:flex;align-items:center;gap:8px;}
+.zoom-image-area{overflow:auto;max-height:76vh;background:#f6f8fa;border:1px solid #d7e1e8;border-radius:5px;text-align:center;}
+.zoom-image-area img{display:block;max-width:none!important;max-height:none!important;height:auto;margin:0 auto;}
+.matching-widget{position:relative;grid-template-columns:minmax(0,1fr) minmax(32px,12%) minmax(0,1fr);gap:10px;align-items:start;}
+.matching-gap{min-width:0;min-height:1px;}
+.matching-center{grid-column:1/-1;grid-row:auto;display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
+.matching-status{flex:1 1 200px;}
+.matching-connections{flex:1 1 100%;min-height:0;}
+.matching-column{position:relative;z-index:2;min-width:0;}
+.matching-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible;}
+.match-item{position:relative;min-width:0;width:100%;touch-action:none;overflow-wrap:anywhere;cursor:pointer;}
+.match-item.matched{border-color:#8ab5d1;background:#edf6fc;}
+.match-item.active{border-color:#3478ad;background:#e3f1fb;box-shadow:0 0 0 1px #3478ad;}
+.match-item[data-side="left"]::after,.match-item[data-side="right"]::before{content:"";position:absolute;top:50%;width:10px;height:10px;border:1.5px solid #fff;border-radius:50%;background:#3478ad;transform:translateY(-50%);}
+.match-item[data-side="left"]::after{right:-6px;}
+.match-item[data-side="right"]::before{left:-6px;}
+.match-body{min-width:0;}
+.match-body img{max-width:100%;height:auto;}
+.connection-chip{cursor:pointer;}
+.connection-chip:hover{background:#d9eaf5;}
+@media(max-width:650px){
+  .matching-widget{grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);gap:6px;}
+  .match-item{padding:7px 6px;gap:4px;font-size:.79rem;min-height:48px;}
+  .match-badge{min-width:20px;height:20px;font-size:.72rem;}
+  .matching-center{padding:9px;}
+  .drawing-tools{gap:4px;padding:6px;}
+  .drawing-tools select,.drawing-tools button{font-size:.72rem;padding:4px 6px;}
+  .drawing-dialog,.image-lightbox{width:96vw;padding:10px;}
+}
+
+.zoom-image-area.is-panning{cursor:grabbing;user-select:none;}
+.zoom-image-area.is-panning img{pointer-events:none;}
+.drawing-tools .drawing-clear{margin-left:auto;}
+
+
+/* V24 refinement: preserve the canvas bitmap aspect ratio in compact and enlarged views. */
+.drawing-wrap .draw-canvas:not(.overlay-canvas){
+  width:100%;
+  height:auto !important;
+  aspect-ratio:auto;
+}
+.drawing-tools.compact-drawing-tools{
+  max-width:380px;
+  margin:10px auto 0;
+  padding:5px 6px;
+  gap:5px;
+  border-radius:6px;
+  background:#f8fafc;
+  box-shadow:none;
+  align-items:center;
+}
+.drawing-tools.compact-drawing-tools.drawing-tools-annotation{max-width:780px;}
+.drawing-tools.compact-drawing-tools.drawing-tools-small{max-width:100%;}
+.drawing-tools.compact-drawing-tools>select{
+  width:112px;
+  max-width:100%;
+  min-height:28px;
+  padding:3px 5px;
+  font-size:.75rem;
+  flex:0 1 112px;
+}
+.drawing-tools.compact-drawing-tools .drawing-settings{gap:4px;flex:0 1 auto;}
+.drawing-tools.compact-drawing-tools .drawing-settings select{
+  min-height:28px;
+  padding:3px 4px;
+  font-size:.73rem;
+}
+.drawing-tools.compact-drawing-tools .drawing-settings input[type="range"]{width:56px;}
+.drawing-tools.compact-drawing-tools .drawing-settings input[type="text"]{width:92px;min-height:28px;}
+.drawing-tools.compact-drawing-tools .drawing-settings input[type="color"]{width:28px;height:28px;}
+.drawing-tools.compact-drawing-tools .particle-shades{gap:5px;padding:2px;}
+.drawing-tools.compact-drawing-tools .particle-swatch{
+  flex:0 0 19px;width:19px;height:19px;min-height:19px;
+  border-radius:50%;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  margin-left:auto;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions .drawing-action{
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 29px;
+  width:29px;height:28px;min-height:28px;
+  padding:3px;
+  border:1px solid transparent;
+  border-radius:5px;
+  background:transparent;
+  color:#344c60;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions .drawing-action:hover:not(:disabled){
+  background:#e5f0f7;
+  border-color:#cadbe7;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions .drawing-action:disabled{
+  opacity:.35;background:transparent;
+}
+.drawing-tools.compact-drawing-tools .drawing-actions .drawing-clear{
+  margin-left:4px;
+  border-left:1px solid #d6e1e9;
+  border-radius:0 5px 5px 0;
+}
+.drawing-tools.compact-drawing-tools+.drawing-wrap{margin-top:4px;}
+.drawing-dialog .drawing-tools.compact-drawing-tools{max-width:none;width:100%;}
+@media(max-width:650px){
+  .drawing-tools.compact-drawing-tools{padding:4px;gap:4px;}
+  .drawing-tools.compact-drawing-tools>select{width:104px;flex-basis:104px;}
+  .drawing-tools.compact-drawing-tools .drawing-actions{gap:1px;}
+  .drawing-tools.compact-drawing-tools .drawing-actions .drawing-action{width:27px;flex-basis:27px;}
+}
+
+
+/* Compact particle shade dropdown, text label, and mixture table inputs. */
+.drawing-tools.compact-drawing-tools .drawing-settings select[aria-label="Particle shade"]{
+  width:88px;
+  min-width:0;
+  max-width:88px;
+  flex:0 0 88px;
+  padding:3px 4px;
+}
+.drawing-tools.compact-drawing-tools .drawing-settings select[aria-label="Particle size"]{
+  width:72px;
+  min-width:0;
+  max-width:72px;
+}
+.drawing-tools.compact-drawing-tools .drawing-settings input[aria-label="Drawing label"]{
+  width:64px;
+  min-width:0;
+  max-width:64px;
+  padding:3px 5px;
+}
+.mixture-classification-cell{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+}
+.mixture-classification-cell .blank-input{
+  width:100%;
+  max-width:100%;
+}
+
+
+/* V24: single-line particle controls with a visual greyscale picker. */
+.drawing-tools.compact-drawing-tools.particle-mode{
+  flex-wrap:nowrap;
+  justify-content:space-between;
+  gap:3px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode>select[aria-label="Drawing tool"]{
+  width:112px;
+  min-width:112px;
+  max-width:112px;
+  flex:0 0 112px;
+  padding:3px 5px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-settings{
+  flex:0 0 auto;
+  flex-wrap:nowrap;
+  gap:3px;
+}
+.drawing-tools.compact-drawing-tools .drawing-settings select[aria-label="Particle size"]{
+  width:36px;
+  min-width:0;
+  max-width:36px;
+  flex:0 0 36px;
+  padding:3px 1px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-actions{
+  flex:0 0 auto;
+  margin-left:0;
+  gap:0;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-actions .drawing-action{
+  width:25px;
+  flex-basis:25px;
+  height:27px;
+  min-height:27px;
+  padding:3px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-actions .drawing-clear{margin-left:2px;}
+.drawing-tools.compact-drawing-tools .particle-shade-picker{
+  display:block;
+  position:relative;
+  width:34px;
+  min-width:34px;
+  flex:0 0 34px;
+  font-size:.75rem;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-picker[hidden]{display:none!important;}
+.drawing-tools.compact-drawing-tools .particle-shade-picker summary{
+  display:flex;align-items:center;justify-content:flex-start;gap:2px;
+  width:34px;height:28px;padding:3px 2px;
+  background:white;color:#314d60;border:1px solid #c5d5e1;
+  border-radius:5px;cursor:pointer;list-style:none;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-picker summary::-webkit-details-marker{display:none;}
+.drawing-tools.compact-drawing-tools .particle-shade-picker summary::after{
+  content:"";margin-left:auto;margin-right:2px;
+  width:0;height:0;border-left:3px solid transparent;
+  border-right:3px solid transparent;border-top:4px solid currentColor;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-current{
+  width:15px;height:15px;flex:0 0 15px;border:1px solid #606c76;border-radius:50%;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-menu{
+  position:fixed;z-index:10000;display:flex;gap:4px;
+  width:max-content;max-width:calc(100vw - 16px);
+  padding:6px;background:white;border:1px solid #bccbd7;
+  border-radius:7px;box-shadow:0 6px 18px #182a4050;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-picker:not([open]) .particle-shade-menu{display:none;}
+.drawing-tools.compact-drawing-tools .particle-shade-menu button{
+  width:29px;height:29px;min-height:29px;padding:4px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid transparent;border-radius:5px;background:transparent;cursor:pointer;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-menu button[aria-selected="true"]{
+  border-color:#3478ad;background:#e6f2f8;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-menu button:focus-visible,
+.drawing-tools.compact-drawing-tools .particle-shade-picker summary:focus-visible{
+  outline:2px solid #3478ad;outline-offset:1px;
+}
+.drawing-tools.compact-drawing-tools .particle-shade-swatch{
+  display:block;width:20px;height:20px;border:1px solid #586777;border-radius:50%;
+}
+@media(max-width:650px){
+  .drawing-tools.compact-drawing-tools.particle-mode{padding:4px 2px;gap:2px;}
+  .drawing-tools.compact-drawing-tools.particle-mode>select[aria-label="Drawing tool"]{width:104px;min-width:104px;max-width:104px;flex:0 0 104px;}
+  .drawing-tools.compact-drawing-tools.particle-mode .drawing-actions .drawing-action{width:23px;flex-basis:23px;}
+}
+
+
+/* V24: keep the Ex 1-23 table and drawing header stable in all modes.
+   Fixed table columns prevent the Particle controls changing column widths;
+   the two contextual selectors sit directly beside the tool selector. */
+#ex-mix-types + .table-scroll .content-table{
+  table-layout:fixed;
+  width:100%;
+  min-width:780px;
+}
+#ex-mix-types + .table-scroll .content-table th:nth-child(1){width:25%;}
+#ex-mix-types + .table-scroll .content-table th:nth-child(2){width:43%;}
+#ex-mix-types + .table-scroll .content-table th:nth-child(3){width:32%;}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools > select[aria-label="Drawing tool"]{
+  width:88px;
+  min-width:88px;
+  max-width:88px;
+  flex:0 0 88px;
+}
+.drawing-tools.compact-drawing-tools.particle-mode{
+  justify-content:flex-start;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-actions{
+  margin-left:auto;
+}
+
+
+/* Ex 1-23: the Text tool needs the same single row as the Particle tool.
+   Scope the tighter spacing to this table; other drawing boards are unchanged. */
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools{
+  flex-wrap:nowrap;
+  justify-content:flex-start;
+  gap:3px;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-settings{
+  flex:0 0 auto;
+  flex-wrap:nowrap;
+  min-width:0;
+  gap:3px;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-settings input[aria-label="Drawing label"]{
+  width:54px;
+  min-width:0;
+  max-width:54px;
+  box-sizing:border-box;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-actions{
+  flex:0 0 auto;
+  gap:1px;
+  margin-left:auto;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-actions .drawing-action{
+  width:23px;
+  flex:0 0 23px;
+  min-width:23px;
+  height:27px;
+  min-height:27px;
+  padding:3px;
+}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools .drawing-actions .drawing-clear{
+  margin-left:2px;
+}

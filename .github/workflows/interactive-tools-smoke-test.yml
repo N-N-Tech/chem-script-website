@@ -1,0 +1,222 @@
+name: Interactive tools smoke test
+on:
+  push:
+    branches: [interactive-tools]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: interactive-tools-smoke
+  cancel-in-progress: true
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check js/script.js
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Test website interactions
+        run: |
+          python3 -m http.server 8080 > /tmp/chem-website-server.log 2>&1 &
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const {chromium} = require('playwright');
+          (async()=>{
+            const browser = await chromium.launch({headless:true});
+            try {
+              const page = await browser.newPage({viewport:{width:1200,height:900}});
+              const errors=[];
+              page.on('pageerror',e=>errors.push(e.message));
+              await page.route('**/*',r=>r.request().url().startsWith('http://127.0.0.1:8080/')?r.continue():r.abort());
+              const open = async path => page.goto('http://127.0.0.1:8080/'+path,{waitUntil:'domcontentloaded'});
+              await open('chapters/04_properties.html');
+              const match=page.locator('.matching-widget').first();
+              await match.waitFor();
+              const left=match.locator('.match-item[data-side="left"]').first();
+              const right=match.locator('.match-item[data-side="right"]').first();
+              await left.click(); await right.click();
+              await match.locator('.matching-lines path').first().waitFor({state:'attached'});
+              assert.equal(await match.locator('.matching-lines path').count(),1);
+              await match.locator('button.connection-chip').first().click();
+              assert.equal(await match.locator('button.connection-chip').count(),0);
+              await left.scrollIntoViewIfNeeded(); const a=await left.boundingBox(), b=await right.boundingBox();
+              await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
+              await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:12});await page.mouse.up();
+              await match.locator('button.connection-chip').first().waitFor();
+              await page.reload({waitUntil:'domcontentloaded'});
+              await page.locator('.matching-widget button.connection-chip').first().waitFor();
+              const image=page.locator('img.zoomable-image[src*="MetalBarChart.svg"]').first();
+              await image.evaluate(img=>{img.loading='eager';});
+              await image.click();
+              await page.locator('.image-lightbox[open]').waitFor();await page.keyboard.press('Escape');
+              await page.locator('.image-lightbox').waitFor({state:'detached'});
+              await open('chapters/03_chemical_reactions.html');
+              const tools=page.locator('.drawing-tools').first();await tools.waitFor();
+              const canvas=page.locator('.drawing-wrap canvas.draw-canvas').first();
+              const tool=tools.locator('select[aria-label="Drawing tool"]');
+              const saved=()=>page.evaluate(()=>{
+                const c=document.querySelector('.drawing-wrap canvas.draw-canvas');
+                const k=Object.keys(localStorage).find(k=>k.endsWith('::'+c.dataset.persistId));
+                return k?JSON.parse(localStorage.getItem(k)):null;
+              });
+              await tool.selectOption('Particle');await canvas.scrollIntoViewIfNeeded();
+              let box=await canvas.boundingBox();
+              await canvas.click({position:{x:box.width/2,y:box.height/2}});
+              let data=await saved();assert.equal(data.particles.length,1);
+              const x=data.particles[0].x;
+              await tool.selectOption('Move particle');box=await canvas.boundingBox();
+              await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+              await page.mouse.move(box.x+box.width/2+25,box.y+box.height/2,{steps:6});await page.mouse.up();
+              data=await saved();assert.ok(data.particles[0].x>x);
+              await tools.getByRole('button',{name:'Undo',exact:true}).click();data=await saved();assert.ok(Math.abs(data.particles[0].x-x)<0.01);
+              await tools.getByRole('button',{name:'Redo',exact:true}).click();data=await saved();assert.ok(data.particles[0].x>x);
+              await tools.getByRole('button',{name:'Enlarge',exact:true}).click();await page.locator('.drawing-dialog[open]').waitFor();
+              await page.getByRole('button',{name:'Close enlarged drawing'}).click();
+              await page.locator('.drawing-dialog').waitFor({state:'detached'});
+              await page.reload({waitUntil:'domcontentloaded'});await page.locator('.drawing-tools').first().waitFor();
+              data=await saved();assert.equal(data.particles.length,1);
+              // Check the mixture table drawings (formerly Ex 1-24).
+              // Circular particles must stay circular in both display modes.
+              await open('chapters/05_particle_model_applications.html');
+              const mixture = page.locator('#ex-mix-types + .table-scroll .table-drawing').first();
+              await mixture.waitFor();
+              const mixCanvas=mixture.locator('canvas.draw-canvas');
+              const mixTools=mixture.locator('xpath=preceding-sibling::*[contains(@class,"drawing-tools")]').first();
+              await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Particle');
+              await mixCanvas.click({position:{x:40,y:30}});
+              const ratio=async()=>mixCanvas.evaluate(c=>{
+                const r=c.getBoundingClientRect();
+                return {backing:c.width/c.height,display:r.width/r.height,width:r.width,height:r.height};
+              });
+              // V24 follow-up: compact controls and mixture classification layout.
+              const mixtureTable=page.locator('#ex-mix-types + .table-scroll table');
+              const titles=await mixtureTable.locator('tr').first().locator('th').allTextContents();
+              assert.deepEqual(titles.map(t=>t.trim()),['states of matter and name','particle model','example']);
+              const firstRow=mixtureTable.locator('tr').nth(1);
+              const firstCell=firstRow.locator('td').nth(0);
+              const secondCell=firstRow.locator('td').nth(1);
+              const inputs=firstCell.locator('input');
+              assert.equal(await inputs.count(),2);
+              assert.equal(await inputs.nth(0).getAttribute('data-persist-id'),'mix-type-states-1');
+              assert.equal(await inputs.nth(1).getAttribute('data-persist-id'),'mix-type-name-1');
+              assert.equal(await secondCell.locator('input.blank-input').count(),0);
+              await inputs.nth(1).fill('test mixture');
+              await page.reload({waitUntil:'domcontentloaded'});
+              assert.equal(await page.locator('#ex-mix-types + .table-scroll table tr').nth(1).locator('td').first().locator('input').nth(1).inputValue(),'test mixture');
+              await page.locator('#ex-mix-types + .table-scroll table tr').nth(1).locator('td').first().locator('input').nth(1).fill('');
+              // Ex 1-23: all table columns and the toolbar must retain their
+              // dimensions when the drawing tool changes.
+              const geometry=async()=>page.evaluate(()=>{
+                const table=document.querySelector('#ex-mix-types + .table-scroll table');
+                const board=document.querySelector('#ex-mix-types + .table-scroll .table-drawing');
+                const tools=board.previousElementSibling;
+                const r=e=>{const b=e.getBoundingClientRect();return {left:b.left,right:b.right,top:b.top,width:b.width};};
+                return {
+                  table:r(table),
+                  headings:[...table.querySelectorAll('th')].map(r),
+                  tools:r(tools),
+                  tool:r(tools.querySelector('select[aria-label="Drawing tool"]')),
+                  shade:r(tools.querySelector('.particle-shade-picker')),
+                  size:r(tools.querySelector('select[aria-label="Particle size"]')),
+                  actions:r(tools.querySelector('.drawing-actions')),
+                  scroll:table.closest('.table-scroll').scrollWidth
+                };
+              });
+              await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Pen');
+              const penGeometry=await geometry();
+              await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Particle');
+              const particleGeometry=await geometry();
+              for(let i=0;i<3;i++)
+                assert.ok(Math.abs(penGeometry.headings[i].width-particleGeometry.headings[i].width)<1,
+                  'Ex 1-23 column '+i+' changes width with Particle mode: '+JSON.stringify({penGeometry,particleGeometry}));
+              assert.ok(Math.abs(penGeometry.tools.width-particleGeometry.tools.width)<1,
+                'Ex 1-23 toolbar changes width with Particle mode');
+              assert.ok(particleGeometry.shade.left-particleGeometry.tool.right<=6,
+                'Particle shade picker detached from main tool dropdown: '+JSON.stringify(particleGeometry));
+              assert.ok(particleGeometry.size.left-particleGeometry.shade.right<=6,
+                'Particle size detached from shade picker: '+JSON.stringify(particleGeometry));
+              assert.ok(particleGeometry.actions.right<=particleGeometry.tools.right+1,
+                'Toolbar action buttons overflow: '+JSON.stringify(particleGeometry));
+              console.log('Ex 1-23 toolbar and table geometry OK:',{penGeometry,particleGeometry});
+              // Explicitly verify the Text mode; earlier checks only measured
+              // the label input width and missed toolbar wrapping/overflow.
+              const modes=['Pen','Eraser','Circle','Line','Arrow','Text','Particle','Move particle'];
+              const widths={};
+              for(const mode of modes){
+                await mixTools.locator('select[aria-label="Drawing tool"]').selectOption(mode);
+                const result=await mixTools.evaluate(t=>{
+                  const visible=e=>e&&getComputedStyle(e).display!=='none'&&!e.hidden;
+                  const items=[t.querySelector('select[aria-label="Drawing tool"]'),
+                    ...t.querySelector('.drawing-settings').children].filter(visible);
+                  items.push(t.querySelector('.drawing-actions'));
+                  const r=t.getBoundingClientRect();
+                  const boxes=items.map(e=>e.getBoundingClientRect());
+                  return {width:r.width,items:boxes.map(b=>({top:b.top,bottom:b.bottom,center:b.top+b.height/2,left:b.left,right:b.right,width:b.width})),
+                    maxRight:Math.max(...boxes.map(b=>b.right)),maxCenter:Math.max(...boxes.map(b=>b.top+b.height/2)),
+                    minCenter:Math.min(...boxes.map(b=>b.top+b.height/2)),toolbarRight:r.right};
+                });
+                widths[mode]=result.width;
+                assert.ok(result.maxCenter-result.minCenter<6,'Ex 1-23 toolbar wraps in '+mode+': '+JSON.stringify(result));
+                assert.ok(result.maxRight<=result.toolbarRight+1,'Ex 1-23 toolbar overflows in '+mode+': '+JSON.stringify(result));
+              }
+              assert.ok(Math.max(...Object.values(widths))-Math.min(...Object.values(widths))<1,
+                'Ex 1-23 toolbar width changes between modes: '+JSON.stringify(widths));
+              console.log('Ex 1-23 all tool modes fit on a single line:',widths);
+              const shades=mixTools.locator('details.particle-shade-picker');
+              const drawingTool=mixTools.locator('select[aria-label="Drawing tool"]');
+              await drawingTool.selectOption('Pen');
+              const standardWidth=await drawingTool.evaluate(e=>e.getBoundingClientRect().width);
+              await drawingTool.selectOption('Particle');
+              const particleWidth=await drawingTool.evaluate(e=>e.getBoundingClientRect().width);
+              assert.ok(Math.abs(standardWidth-particleWidth)<1,'Drawing tool dropdown width changes in Particle mode: '+JSON.stringify({standardWidth,particleWidth}));
+              assert.equal(await shades.locator('button[role="option"]').count(),5);
+              await shades.locator('summary').click();
+              await shades.locator('button[data-shade="#202020"]').click();
+              const selected=await shades.locator('.particle-shade-current').evaluate(e=>getComputedStyle(e).backgroundColor);
+              assert.equal(selected,'rgb(32, 32, 32)');
+              assert.equal(await shades.getAttribute('open'),null);
+              const sizes=await mixTools.locator('select[aria-label="Particle size"] option').allTextContents();
+              assert.deepEqual(sizes,['S','M','L']);
+              const inline=await mixTools.evaluate(t=>{
+                const all=[t.querySelector('select[aria-label="Drawing tool"]'),
+                  t.querySelector('.particle-shade-picker'),
+                  t.querySelector('select[aria-label="Particle size"]'),
+                  t.querySelector('.drawing-actions')];
+                const bars=all.map(e=>e.getBoundingClientRect());
+                const parent=t.getBoundingClientRect();
+                return {y:bars.map(b=>b.y),parentLeft:parent.left,parentRight:parent.right,right:bars.at(-1).right};
+              });
+              assert.ok(Math.max(...inline.y)-Math.min(...inline.y)<5,'Particle controls wrap: '+JSON.stringify(inline));
+              assert.ok(inline.right<=inline.parentRight+1,'Particle controls overflow: '+JSON.stringify(inline));
+              await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Text');
+              const labelInput=mixTools.locator('input[aria-label="Drawing label"]');
+              const labelWidth=await labelInput.evaluate(e=>e.getBoundingClientRect().width);
+              assert.ok(labelWidth<=70,'Label text input is too wide: '+labelWidth);
+              await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Pen');
+              assert.equal(await mixTools.locator('input[aria-label="Drawing colour"]').inputValue(),'#000000');
+              const normal=await ratio();
+              assert.ok(Math.abs(normal.backing/normal.display-1)<.02,'Mixture drawing has stretched geometry in normal view: '+JSON.stringify(normal));
+              await mixTools.getByRole('button',{name:'Enlarge',exact:true}).click();
+              await page.locator('.drawing-dialog[open]').waitFor();
+              const enlarged=await ratio();
+              assert.ok(Math.abs(enlarged.backing/enlarged.display-1)<.02,'Mixture drawing has stretched geometry when enlarged: '+JSON.stringify(enlarged));
+              await page.getByRole('button',{name:'Close enlarged drawing'}).click();
+              await page.locator('.drawing-dialog').waitFor({state:'detached'});
+              const compact=await mixTools.evaluate(t=>({
+                compact:t.classList.contains('compact-drawing-tools'),
+                actions:[...t.querySelectorAll('.drawing-action')].map(b=>b.getAttribute('aria-label'))
+              }));
+              assert.ok(compact.compact,'Drawing toolbar is not compact');
+              assert.deepEqual(compact.actions,['Undo','Redo','Enlarge','Clear drawing']);
+              console.log('Mixture circle geometry OK:',normal,enlarged);
+
+              assert.deepEqual(errors,[]);
+              console.log('Passed: matching click/drag/persistence, image zoom, particle placement/movement/undo/redo/persistence, drawing zoom.');
+            } finally {await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1);});
+          NODE
