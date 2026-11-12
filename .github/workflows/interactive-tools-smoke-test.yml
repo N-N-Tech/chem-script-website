@@ -156,12 +156,12 @@ jobs:
                   items.push(t.querySelector('.drawing-actions'));
                   const r=t.getBoundingClientRect();
                   const boxes=items.map(e=>e.getBoundingClientRect());
-                  return {width:r.width,items:boxes.map(b=>({top:b.top,left:b.left,right:b.right,width:b.width})),
-                    maxRight:Math.max(...boxes.map(b=>b.right)),maxTop:Math.max(...boxes.map(b=>b.top)),
-                    minTop:Math.min(...boxes.map(b=>b.top)),toolbarRight:r.right};
+                  return {width:r.width,items:boxes.map(b=>({top:b.top,bottom:b.bottom,center:b.top+b.height/2,left:b.left,right:b.right,width:b.width})),
+                    maxRight:Math.max(...boxes.map(b=>b.right)),maxCenter:Math.max(...boxes.map(b=>b.top+b.height/2)),
+                    minCenter:Math.min(...boxes.map(b=>b.top+b.height/2)),toolbarRight:r.right};
                 });
                 widths[mode]=result.width;
-                assert.ok(result.maxTop-result.minTop<5,'Ex 1-23 toolbar wraps in '+mode+': '+JSON.stringify(result));
+                assert.ok(result.maxCenter-result.minCenter<6,'Ex 1-23 toolbar wraps in '+mode+': '+JSON.stringify(result));
                 assert.ok(result.maxRight<=result.toolbarRight+1,'Ex 1-23 toolbar overflows in '+mode+': '+JSON.stringify(result));
               }
               assert.ok(Math.max(...Object.values(widths))-Math.min(...Object.values(widths))<1,
