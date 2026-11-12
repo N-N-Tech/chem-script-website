@@ -110,7 +110,12 @@ jobs:
               assert.equal(await page.locator('#ex-mix-types + .table-scroll table tr').nth(1).locator('td').first().locator('input').nth(1).inputValue(),'test mixture');
               await page.locator('#ex-mix-types + .table-scroll table tr').nth(1).locator('td').first().locator('input').nth(1).fill('');
               const shades=mixTools.locator('details.particle-shade-picker');
-              await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Particle');
+              const drawingTool=mixTools.locator('select[aria-label="Drawing tool"]');
+              await drawingTool.selectOption('Pen');
+              const standardWidth=await drawingTool.evaluate(e=>e.getBoundingClientRect().width);
+              await drawingTool.selectOption('Particle');
+              const particleWidth=await drawingTool.evaluate(e=>e.getBoundingClientRect().width);
+              assert.ok(Math.abs(standardWidth-particleWidth)<1,'Drawing tool dropdown width changes in Particle mode: '+JSON.stringify({standardWidth,particleWidth}));
               assert.equal(await shades.locator('button[role="option"]').count(),5);
               await shades.locator('summary').click();
               await shades.locator('button[data-shade="#202020"]').click();
