@@ -143,6 +143,30 @@ jobs:
               assert.ok(particleGeometry.actions.right<=particleGeometry.tools.right+1,
                 'Toolbar action buttons overflow: '+JSON.stringify(particleGeometry));
               console.log('Ex 1-23 toolbar and table geometry OK:',{penGeometry,particleGeometry});
+              // Explicitly verify the Text mode; earlier checks only measured
+              // the label input width and missed toolbar wrapping/overflow.
+              const modes=['Pen','Eraser','Circle','Line','Arrow','Text','Particle','Move particle'];
+              const widths={};
+              for(const mode of modes){
+                await mixTools.locator('select[aria-label="Drawing tool"]').selectOption(mode);
+                const result=await mixTools.evaluate(t=>{
+                  const visible=e=>e&&getComputedStyle(e).display!=='none'&&!e.hidden;
+                  const items=[t.querySelector('select[aria-label="Drawing tool"]'),
+                    ...t.querySelector('.drawing-settings').children].filter(visible);
+                  items.push(t.querySelector('.drawing-actions'));
+                  const r=t.getBoundingClientRect();
+                  const boxes=items.map(e=>e.getBoundingClientRect());
+                  return {width:r.width,items:boxes.map(b=>({top:b.top,left:b.left,right:b.right,width:b.width})),
+                    maxRight:Math.max(...boxes.map(b=>b.right)),maxTop:Math.max(...boxes.map(b=>b.top)),
+                    minTop:Math.min(...boxes.map(b=>b.top)),toolbarRight:r.right};
+                });
+                widths[mode]=result.width;
+                assert.ok(result.maxTop-result.minTop<5,'Ex 1-23 toolbar wraps in '+mode+': '+JSON.stringify(result));
+                assert.ok(result.maxRight<=result.toolbarRight+1,'Ex 1-23 toolbar overflows in '+mode+': '+JSON.stringify(result));
+              }
+              assert.ok(Math.max(...Object.values(widths))-Math.min(...Object.values(widths))<1,
+                'Ex 1-23 toolbar width changes between modes: '+JSON.stringify(widths));
+              console.log('Ex 1-23 all tool modes fit on a single line:',widths);
               const shades=mixTools.locator('details.particle-shade-picker');
               const drawingTool=mixTools.locator('select[aria-label="Drawing tool"]');
               await drawingTool.selectOption('Pen');
