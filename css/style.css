@@ -347,6 +347,12 @@
   min-width:0;
   box-sizing:border-box;
 }
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools > select[aria-label="Drawing tool"]{
+  width:88px;
+  min-width:88px;
+  max-width:88px;
+  flex:0 0 88px;
+}
 .drawing-tools.compact-drawing-tools.particle-mode{
   justify-content:flex-start;
 }
