@@ -326,7 +326,7 @@
     document.addEventListener('pointerdown',e=>{
       if(shades.open&&!shades.contains(e.target))shades.open=false;
     });
-    window.addEventListener('scroll',()=>{if(shades.open)shades.open=false;},true);
+    window.addEventListener('scroll',()=>{if(shades.open)positionShadeMenu();},true);
     window.addEventListener('resize',()=>{if(shades.open)positionShadeMenu();},{passive:true});
     const size=el('select',{'aria-label':'Particle size'});
     [['8','S'],['13','M'],['20','L']].forEach(([v,t])=>size.append(el('option',{value:v,text:t})));size.value='13';
