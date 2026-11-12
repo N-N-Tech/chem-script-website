@@ -328,3 +328,28 @@
   .drawing-tools.compact-drawing-tools.particle-mode>select[aria-label="Drawing tool"]{width:104px;min-width:104px;max-width:104px;flex:0 0 104px;}
   .drawing-tools.compact-drawing-tools.particle-mode .drawing-actions .drawing-action{width:23px;flex-basis:23px;}
 }
+
+
+/* V24: keep the Ex 1-23 table and drawing header stable in all modes.
+   Fixed table columns prevent the Particle controls changing column widths;
+   the two contextual selectors sit directly beside the tool selector. */
+#ex-mix-types + .table-scroll .content-table{
+  table-layout:fixed;
+  width:100%;
+  min-width:780px;
+}
+#ex-mix-types + .table-scroll .content-table th:nth-child(1){width:25%;}
+#ex-mix-types + .table-scroll .content-table th:nth-child(2){width:43%;}
+#ex-mix-types + .table-scroll .content-table th:nth-child(3){width:32%;}
+#ex-mix-types + .table-scroll .drawing-tools.compact-drawing-tools{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+.drawing-tools.compact-drawing-tools.particle-mode{
+  justify-content:flex-start;
+}
+.drawing-tools.compact-drawing-tools.particle-mode .drawing-actions{
+  margin-left:auto;
+}
