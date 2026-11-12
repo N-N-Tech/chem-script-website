@@ -278,15 +278,22 @@
     if(wrap.classList.contains('table-drawing')||wrap.classList.contains('mini-draw'))controls.classList.add('drawing-tools-small');
     const tool=el('select',{'aria-label':'Drawing tool'});
     ['Pen','Eraser','Circle','Line','Arrow','Text','Particle','Move particle'].forEach(t=>tool.append(el('option',{value:t,text:t})));
-    const shades=el('div',{class:'particle-shades','aria-label':'Particle shade'});
-    let selectedShade='#808080';
-    ['#e5e5e5','#b5b5b5','#808080','#505050','#202020'].forEach((c,i)=>{
-      const b=el('button',{type:'button',class:'particle-swatch','aria-label':'Grey '+(i+1),title:'Grey '+(i+1),'aria-pressed':String(c===selectedShade)});b.style.backgroundColor=c;
-      b.onclick=()=>{selectedShade=c;qsa('button',shades).forEach(x=>x.setAttribute('aria-pressed',String(x===b)));};shades.append(b);
+    const shades=el('select',{'aria-label':'Particle shade',title:'Particle shade'});
+    const greyOptions=[
+      ['#e5e5e5','Grey 1 – very light'],['#b5b5b5','Grey 2 – light'],
+      ['#808080','Grey 3 – medium'],['#505050','Grey 4 – dark'],
+      ['#202020','Grey 5 – very dark']
+    ];
+    greyOptions.forEach(([value,text])=>{
+      const option=el('option',{value,text});
+      option.style.backgroundColor=value;
+      option.style.color=['#505050','#202020'].includes(value)?'#ffffff':'#111111';
+      shades.append(option);
     });
+    shades.value='#808080';
     const size=el('select',{'aria-label':'Particle size'});
     [['8','Small'],['13','Medium'],['20','Large']].forEach(([v,t])=>size.append(el('option',{value:v,text:t})));size.value='13';
-    const colour=el('input',{type:'color',value:'#253d54','aria-label':'Drawing colour'});
+    const colour=el('input',{type:'color',value:'#000000','aria-label':'Drawing colour'});
     const width=el('input',{type:'range',min:'1',max:'8',value:'2','aria-label':'Stroke width',title:'Stroke width'});
     const label=el('input',{type:'text',placeholder:'Label text','aria-label':'Drawing label'});
     const undo=el('button',{type:'button','aria-label':'Undo',title:'Undo'}),
@@ -333,7 +340,7 @@
       if(mode==='Text'&&!label.value.trim())return;
       remember();gesture={mode,start:p,last:p,index,base:ic.getImageData(0,0,w,h),pointer:e.pointerId};
       canvas.setPointerCapture(e.pointerId);
-      if(mode==='Particle'){particles.push({x:p.x/w,y:p.y/h,r:Number(size.value)/600,colour:selectedShade});render();}
+      if(mode==='Particle'){particles.push({x:p.x/w,y:p.y/h,r:Number(size.value)/600,colour:shades.value});render();}
       else if(mode==='Eraser'&&index>=0){particles.splice(index,1);render();}
       else if(mode!=='Move particle')stroke(mode,p,p);
     });
@@ -610,19 +617,18 @@
     qsa('tr', table).slice(1).forEach((tr, index) => {
       const cells = qsa('td', tr);
       if (cells[0] && !cells[0].querySelector('input')) {
-        const input = makeAnswerInput({width: '100%'});
-        setPersistId(input, `mix-type-states-${index + 1}`);
-        cells[0].append(input);
+        const wrapper = el('div', {class: 'mixture-classification-cell'});
+        const states = makeAnswerInput({width: '100%', placeholder: 'states of matter'});
+        setPersistId(states, `mix-type-states-${index + 1}`);
+        const name = makeAnswerInput({width: '100%', placeholder: 'name of mixture'});
+        setPersistId(name, `mix-type-name-${index + 1}`);
+        wrapper.append(states, name);
+        cells[0].append(wrapper);
       }
-      if (cells[1] && !cells[1].querySelector('input')) {
-        const wrapper = el('div', {class: 'mixture-answer-cell'});
-        const input = makeAnswerInput({width: '100%', placeholder: 'name of mixture'});
-        setPersistId(input, `mix-type-name-${index + 1}`);
+      if (cells[1] && !cells[1].querySelector('.table-drawing')) {
         const draw = createDrawingWrap({height: 96, persistPrefix: `mix-type-draw-${index + 1}`});
         draw.classList.add('table-drawing');
-        wrapper.append(input, draw);
-        cells[1].innerHTML = '';
-        cells[1].append(wrapper);
+        cells[1].append(draw);
       }
     });
   }
