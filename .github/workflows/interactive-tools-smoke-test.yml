@@ -109,12 +109,27 @@ jobs:
               await page.reload({waitUntil:'domcontentloaded'});
               assert.equal(await page.locator('#ex-mix-types + .table-scroll table tr').nth(1).locator('td').first().locator('input').nth(1).inputValue(),'test mixture');
               await page.locator('#ex-mix-types + .table-scroll table tr').nth(1).locator('td').first().locator('input').nth(1).fill('');
-              const shades=mixTools.locator('select[aria-label="Particle shade"]');
+              const shades=mixTools.locator('details.particle-shade-picker');
               await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Particle');
-              assert.equal(await shades.locator('option').count(),5);
-              await shades.selectOption('#202020');
-              const selected=await shades.inputValue();
-              assert.equal(selected,'#202020');
+              assert.equal(await shades.locator('button[role="option"]').count(),5);
+              await shades.locator('summary').click();
+              await shades.locator('button[data-shade="#202020"]').click();
+              const selected=await shades.locator('.particle-shade-current').evaluate(e=>getComputedStyle(e).backgroundColor);
+              assert.equal(selected,'rgb(32, 32, 32)');
+              assert.equal(await shades.getAttribute('open'),null);
+              const sizes=await mixTools.locator('select[aria-label="Particle size"] option').allTextContents();
+              assert.deepEqual(sizes,['S','M','L']);
+              const inline=await mixTools.evaluate(t=>{
+                const all=[t.querySelector('select[aria-label="Drawing tool"]'),
+                  t.querySelector('.particle-shade-picker'),
+                  t.querySelector('select[aria-label="Particle size"]'),
+                  t.querySelector('.drawing-actions')];
+                const bars=all.map(e=>e.getBoundingClientRect());
+                const parent=t.getBoundingClientRect();
+                return {y:bars.map(b=>b.y),parentLeft:parent.left,parentRight:parent.right,right:bars.at(-1).right};
+              });
+              assert.ok(Math.max(...inline.y)-Math.min(...inline.y)<5,'Particle controls wrap: '+JSON.stringify(inline));
+              assert.ok(inline.right<=inline.parentRight+1,'Particle controls overflow: '+JSON.stringify(inline));
               await mixTools.locator('select[aria-label="Drawing tool"]').selectOption('Text');
               const labelInput=mixTools.locator('input[aria-label="Drawing label"]');
               const labelWidth=await labelInput.evaluate(e=>e.getBoundingClientRect().width);
