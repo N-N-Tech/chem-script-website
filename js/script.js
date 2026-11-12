@@ -273,7 +273,9 @@
     };
     const save=()=>{render();try{const data={type:'canvas',value:canvas.toDataURL('image/png')};if(particles.length){data.ink=ink.toDataURL('image/png');data.particles=copyParticles();}localStorage.setItem(storageKey(id),JSON.stringify(data));}catch(e){console.warn('Drawing could not be saved',e);}};
     try{const raw=localStorage.getItem(storageKey(id));if(raw){const data=JSON.parse(raw);if(data.type==='canvas'&&data.value){ready=false;const img=new Image();img.onload=()=>{ic.drawImage(img,0,0,w,h);particles=Array.isArray(data.particles)?data.particles.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.r)&&typeof p.colour==='string'):[];render();ready=true;};img.onerror=()=>{ready=true;};img.src=data.ink||data.value;}}}catch{}
-    const controls=el('div',{class:'drawing-tools'});
+    const controls=el('div',{class:'drawing-tools compact-drawing-tools'});
+    if(wrap.classList.contains('annotation-board'))controls.classList.add('drawing-tools-annotation');
+    if(wrap.classList.contains('table-drawing')||wrap.classList.contains('mini-draw'))controls.classList.add('drawing-tools-small');
     const tool=el('select',{'aria-label':'Drawing tool'});
     ['Pen','Eraser','Circle','Line','Arrow','Text','Particle','Move particle'].forEach(t=>tool.append(el('option',{value:t,text:t})));
     const shades=el('div',{class:'particle-shades','aria-label':'Particle shade'});
@@ -287,10 +289,21 @@
     const colour=el('input',{type:'color',value:'#253d54','aria-label':'Drawing colour'});
     const width=el('input',{type:'range',min:'1',max:'8',value:'2','aria-label':'Stroke width',title:'Stroke width'});
     const label=el('input',{type:'text',placeholder:'Label text','aria-label':'Drawing label'});
-    const undo=el('button',{type:'button',text:'Undo'}),redo=el('button',{type:'button',text:'Redo'}),zoom=el('button',{type:'button',text:'Enlarge'});
+    const undo=el('button',{type:'button','aria-label':'Undo',title:'Undo'}),
+      redo=el('button',{type:'button','aria-label':'Redo',title:'Redo'}),
+      zoom=el('button',{type:'button','aria-label':'Enlarge',title:'Enlarge drawing'});
+    const icons={
+      undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/>',
+      redo:'<path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/>',
+      zoom:'<path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3"/>',
+      clear:'<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6M10 10v7M14 10v7"/>'
+    };
+    const symbol=name=>'<svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+icons[name]+'</svg>';
+    [undo,redo,zoom].forEach((button,i)=>{button.classList.add('drawing-action');button.innerHTML=symbol(['undo','redo','zoom'][i]);});
     const settings=el('div',{class:'drawing-settings'});settings.append(shades,size,colour,width,label);
-    controls.append(tool,settings,undo,redo,zoom);
-    if(clearButton){clearButton.classList.remove('clear-drawing');clearButton.classList.add('drawing-clear');controls.append(clearButton);}
+    const actions=el('div',{class:'drawing-actions'});actions.append(undo,redo,zoom);
+    if(clearButton){clearButton.classList.remove('clear-drawing');clearButton.classList.add('drawing-action','drawing-clear');clearButton.innerHTML=symbol('clear');clearButton.title='Clear drawing';actions.append(clearButton);}
+    controls.append(tool,settings,actions);
     wrap.before(controls);
     function settingsVisibility(){const m=tool.value;shades.hidden=size.hidden=m!=='Particle';colour.hidden=['Particle','Move particle','Eraser'].includes(m);width.hidden=['Particle','Move particle','Text'].includes(m);label.hidden=m!=='Text';canvas.style.cursor=m==='Move particle'?'move':'crosshair';}
     tool.onchange=settingsVisibility;settingsVisibility();
